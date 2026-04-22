@@ -25,6 +25,8 @@ from pages.tool_star_map import ToolStarMapPage
 from pages.tool_feng_shui import ToolFengShuiPage
 from pages.tool_gem_grind import ToolGemGrindPage
 from pages.tool_zhu_ling import ToolZhuLingPage
+from pages.tool_dunjia import ToolDunJia
+from pages.table_demo import TableDemoPage
 from pages.settings import SettingsPage
 
 
@@ -41,6 +43,8 @@ NAV_ITEMS = [
     ("风水录养成", "🏔", ToolFengShuiPage),
     ("磨砺养成", "⚒️", ToolGemGrindPage),
     ("注灵养成", "⚔️", ToolZhuLingPage),
+    ("遁甲养成", "🔮", ToolDunJia),
+    ("表格演示", "📊", TableDemoPage),  # 新增：表格展示功能演示
     ("设  置", "⚡", SettingsPage),
 ]
 

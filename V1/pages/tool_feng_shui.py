@@ -294,6 +294,7 @@ class ToolFengShuiPage(ctk.CTkFrame):
         self.t1_result.grid(row=8, column=0, columnspan=2, sticky="ew")
         self.t1_result.insert("1.0", "等待计算...\n")
         self.t1_result.configure(state="disabled")
+        self._bind_mousewheel(self.t1_result)
 
     def _on_t1_scope_change(self, val):
         if "单点" in val:
@@ -389,6 +390,7 @@ class ToolFengShuiPage(ctk.CTkFrame):
         self.t2_result.grid(row=8, column=0, columnspan=2, sticky="ew")
         self.t2_result.insert("1.0", "等待计算...\n")
         self.t2_result.configure(state="disabled")
+        self._bind_mousewheel(self.t2_result)
 
     def _on_t2_scope_change(self, val):
         if "单点" in val:
@@ -486,6 +488,7 @@ class ToolFengShuiPage(ctk.CTkFrame):
                 mat_set.add(p["sub_mat"])
         return sorted(mat_set)
 
+
     def _show_result(self, tb: ctk.CTkTextbox, text: str):
         tb.configure(state="normal")
         tb.delete("1.0", "end")
@@ -494,6 +497,15 @@ class ToolFengShuiPage(ctk.CTkFrame):
 
     def _show_error(self, tb: ctk.CTkTextbox, msg: str):
         self._show_result(tb, f"[!] {msg}\n")
+    
+    def _bind_mousewheel(self, widget):
+        """绑定滚轮事件，阻止事件冒泡"""
+        def on_mousewheel(event):
+            widget._parent_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            return "break"
+        widget.bind("<MouseWheel>", on_mousewheel, add="+")
+        widget.bind("<Button-4>", lambda e: (widget._parent_canvas.yview_scroll(-1, "units"), "break")[1], add="+")
+        widget.bind("<Button-5>", lambda e: (widget._parent_canvas.yview_scroll(1, "units"), "break")[1], add="+")
 
     @staticmethod
     def _fmt(num: int) -> str:

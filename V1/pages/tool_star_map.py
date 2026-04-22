@@ -358,6 +358,7 @@ class ToolStarMapPage(ctk.CTkFrame):
         self.t2_result.grid(row=11, column=0, columnspan=2, sticky="ew")
         self.t2_result.insert("1.0", "等待计算...\n")
         self.t2_result.configure(state="disabled")
+        self._bind_mousewheel(self.t2_result)
 
     # ================================================================
     # 标签页切换
@@ -382,6 +383,15 @@ class ToolStarMapPage(ctk.CTkFrame):
     @staticmethod
     def _err(tb: ctk.CTkTextbox, msg: str):
         ToolStarMapPage._show(tb, f"⚠️ {msg}\n")
+    
+    def _bind_mousewheel(self, widget):
+        """绑定滚轮事件，阻止事件冒泡"""
+        def on_mousewheel(event):
+            widget._parent_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            return "break"
+        widget.bind("<MouseWheel>", on_mousewheel, add="+")
+        widget.bind("<Button-4>", lambda e: (widget._parent_canvas.yview_scroll(-1, "units"), "break")[1], add="+")
+        widget.bind("<Button-5>", lambda e: (widget._parent_canvas.yview_scroll(1, "units"), "break")[1], add="+")
 
     @staticmethod
     def _int(val: str, default: int) -> int:

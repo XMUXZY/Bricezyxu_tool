@@ -12,6 +12,8 @@ QQ华夏手游经典区 · 宝石磨砺养成系统计算工具
 import customtkinter as ctk
 
 
+
+
 # ============================================================
 # 一、逐级消耗数据表（方案1=镶嵌位1/2，方案9=镶嵌位3）
 # 字段: level(目标等级), stage(阶段), mat_name(材料名), qty(单次消耗),
@@ -237,6 +239,8 @@ class ToolGemGrindPage(ctk.CTkFrame):
         self.t1_result.grid(row=11, column=0, columnspan=2, sticky="ew")
         self.t1_result.insert("1.0", "等待计算...\n")
         self.t1_result.configure(state="disabled")
+        # 阻止滚轮事件冒泡
+        self._bind_mousewheel(self.t1_result)
 
     # ================================================================
     # Tab 2 UI - 根据目标等级计算所需材料
@@ -318,6 +322,19 @@ class ToolGemGrindPage(ctk.CTkFrame):
 
     def _show_error(self, tb: ctk.CTkTextbox, msg: str):
         self._show_result(tb, f"⚠ {msg}\n")
+    
+    def _bind_mousewheel(self, widget):
+        """绑定滚轮事件，阻止事件冒泡"""
+        def on_mousewheel(event):
+            # 只在widget内部处理滚轮事件，不让事件继续传播
+            widget._parent_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            return "break"  # 阻止事件冒泡
+        
+        # 绑定Windows/MacOS的滚轮事件
+        widget.bind("<MouseWheel>", on_mousewheel, add="+")
+        # 绑定Linux的滚轮事件
+        widget.bind("<Button-4>", lambda e: (widget._parent_canvas.yview_scroll(-1, "units"), "break")[1], add="+")
+        widget.bind("<Button-5>", lambda e: (widget._parent_canvas.yview_scroll(1, "units"), "break")[1], add="+")
 
     @staticmethod
     def _fmt(num) -> str:
@@ -388,7 +405,7 @@ class ToolGemGrindPage(ctk.CTkFrame):
             lv = cur_lv
             used_mats = {k: 0.0 for k in mats}
             used_copper = 0.0
-            steps = []
+            table_data = []
 
             for row in data:
                 if lv >= row["level"]:
@@ -407,15 +424,32 @@ class ToolGemGrindPage(ctk.CTkFrame):
 
                 # 检查材料是否足够
                 mat_ok = True
+                copper_ok = True
                 if mats[row["mat"]] != float("inf"):
                     if mats[row["mat"]] < cost_qty:
                         mat_ok = False
                 if copper != float("inf"):
                     if copper < cost_copper:
-                        mat_ok = False
+                        copper_ok = False
 
-                if not mat_ok:
-                    steps.append(f"  ✗ 升至{row['level']}级: 材料不足")
+                if not mat_ok or not copper_ok:
+                    # 材料不足
+                    lack_info = []
+                    if not mat_ok:
+                        lack = cost_qty - mats[row["mat"]]
+                        lack_info.append(f"材料差{self._fmt(lack)}")
+                    if not copper_ok:
+                        lack_info.append(f"铜钱差{self._fmt(cost_copper - copper)}")
+                    
+                    table_data.append([
+                        row["level"],
+                        row["mat"],
+                        f"{self._fmt(cost_qty)}",
+                        f"{cost_copper / 10000:.1f}万",
+                        f"{prob}%",
+                        row.get("unlock", ""),
+                        f"❌ {', '.join(lack_info)}"
+                    ])
                     break
 
                 # 扣除材料
@@ -427,57 +461,103 @@ class ToolGemGrindPage(ctk.CTkFrame):
                     used_copper += cost_copper
 
                 lv = row["level"]
-                status = ""
+                
+                prob_note = ""
                 if prob < 100:
                     if use_expected:
-                        status = f" (期望值, 基础{prob}%)"
+                        prob_note = f"期望值"
                     else:
-                        status = f" (确定值, 忽略{prob}%成功率)"
-                unlock_info = f" [{row['unlock']}]" if row.get("unlock") else ""
-                steps.append(
-                    f"  ✓ {row['level']}级: {row['mat']}×{self._fmt(cost_qty)}"
-                    f"{status}{unlock_info}"
-                )
+                        prob_note = f"忽略概率"
+                else:
+                    prob_note = "必成功"
+                
+                unlock_info = row.get("unlock", "")
+                
+                table_data.append([
+                    row["level"],
+                    row["mat"],
+                    f"{self._fmt(cost_qty)}",
+                    f"{cost_copper / 10000:.1f}万",
+                    f"{prob}%",
+                    unlock_info,
+                    f"✅ {prob_note}"
+                ])
 
-            # 构建结果文本
-            lines = []
+            # 添加汇总行
+            if table_data:
+                table_data.append(["", "", "", "", "", "", ""])  # 空行
+                table_data.append([
+                    "总计",
+                    "累计消耗",
+                    "",
+                    "",
+                    "",
+                    "",
+                    ""
+                ])
+                for k, v in used_mats.items():
+                    if v > 0:
+                        table_data.append([
+                            "",
+                            k,
+                            f"{self._fmt(v)}",
+                            "",
+                            "",
+                            "",
+                            "已消耗"
+                        ])
+                if used_copper > 0:
+                    table_data.append([
+                        "",
+                        "铜钱",
+                        f"{self._fmt(used_copper)}",
+                        f"{self._fmt(used_copper / 10000)}万",
+                        "",
+                        "",
+                        "已消耗"
+                    ])
+
+            # 显示表格
             mode_str = "期望值模式" if use_expected else "确定值模式"
-            lines.append(f"━━━ 养成模拟结果（{mode_str}） ━━━\n")
-            lines.append(f"起始: {cur_lv}级 | 位置: {'位置3' if is_pos3 else '位置1/2'}")
-            lines.append(f"\n▸ 可达最高等级: {lv}级")
-            if lv > cur_lv:
-                lines.append(f"  从 {cur_lv}级 → {lv}级，共提升 {lv - cur_lv} 级\n")
-            else:
-                lines.append(f"  材料不足无法升级\n")
-
-            lines.append("━ 累计消耗 ━")
-            any_used = False
+            pos_str = "位置3" if is_pos3 else "位置1/2"
+            headers = ["目标等级", "材料名称", "材料数量", "铜钱", "成功率", "解锁条件", "状态"]
+            title = f"宝石磨砺养成计算 ({mode_str} · {pos_str}) - {cur_lv}级→{lv}级"
+            
+            # 在文本框中显示详细结果
+            output = f"✅ 计算完成\n\n"
+            output += f"{'='*50}\n"
+            output += f"起始等级: {cur_lv}级\n"
+            output += f"可达等级: {lv}级\n"
+            output += f"提升等级: {lv - cur_lv}级\n"
+            output += f"镶嵌位置: {pos_str}\n"
+            output += f"计算模式: {mode_str}\n"
+            output += f"{'='*50}\n\n"
+            
+            output += "【累计消耗】\n"
             for k, v in used_mats.items():
                 if v > 0:
-                    lines.append(f"  {k}: {self._fmt(v)} 颗")
-                    any_used = True
+                    output += f"  {k}: {self._fmt(v)}颗\n"
             if used_copper > 0:
-                lines.append(f"  铜钱: {self._fmt(used_copper)} ({self._fmt(used_copper / 10000)}万)")
-                any_used = True
-            if not any_used:
-                lines.append("  （无消耗）")
-
-            lines.append("\n━ 详细步骤 ━")
-            for step in steps:
-                lines.append(step)
-
-            # 剩余材料
-            remain_lines = []
-            for k, v in mats.items():
-                if v != float("inf") and v > 0.001:
-                    remain_lines.append(f"  剩余{k}: {self._fmt(v)}")
-            if copper != float("inf") and copper > 0:
-                remain_lines.append(f"  剩余铜钱: {self._fmt(copper)} ({self._fmt(copper / 10000)}万)")
-            if remain_lines:
-                lines.append("\n━ 剩余材料 ━")
-                lines.extend(remain_lines)
-
-            self._show_result(self.t1_result, "\n".join(lines) + "\n")
+                output += f"  铜钱: {self._fmt(used_copper)} ({self._fmt(used_copper/10000)}万)\n"
+            
+            output += f"\n{'='*50}\n\n"
+            
+            # 显示升级路径（每5级显示一次）
+            output += "【升级路径】\n"
+            for i, row in enumerate(table_data[:20]):  # 只显示前20级
+                target_lv = row[0]
+                mat_name = row[1]
+                mat_qty = row[2]
+                copper = row[3]
+                rate = row[4]
+                if isinstance(target_lv, int):
+                    if target_lv % 5 == 0 or target_lv == lv or i < 3:
+                        output += f"  Lv.{target_lv}: {mat_name} × {self._fmt(mat_qty)}, 铜钱 {self._fmt(copper)}, 成功率 {rate}\n"
+            
+            if len(table_data) > 20:
+                output += f"\n... (共{len(table_data)}级，仅显示关键节点) ...\n"
+            
+            self._show_result(self.t1_result, output)
 
         except Exception as ex:
             self._show_error(self.t1_result, f"计算出错: {ex}")
@@ -507,10 +587,8 @@ class ToolGemGrindPage(ctk.CTkFrame):
             # 累加确定消耗和期望消耗
             total_mats_det = {}  # 确定消耗
             total_mats_exp = {}  # 期望消耗
-            total_copper_det = 0
-            total_copper_exp = 0.0
-            detail_lines = []
-            stage_summary = {}
+            total_copper = 0
+            table_data = []
 
             for row in data:
                 if row["level"] <= start_lv:
@@ -525,7 +603,7 @@ class ToolGemGrindPage(ctk.CTkFrame):
 
                 # 确定
                 total_mats_det[mat] = total_mats_det.get(mat, 0) + qty
-                total_copper_det += cop
+                total_copper += cop
 
                 # 期望
                 if prob >= 100:
@@ -533,64 +611,134 @@ class ToolGemGrindPage(ctk.CTkFrame):
                 else:
                     exp_qty = qty / (prob / 100.0)
                 total_mats_exp[mat] = total_mats_exp.get(mat, 0) + exp_qty
-                total_copper_exp += cop
 
-                # 分阶段统计
-                st = row["stage"]
-                if st not in stage_summary:
-                    stage_summary[st] = {"mat": mat, "det": 0, "exp": 0, "copper": 0, "levels": []}
-                stage_summary[st]["det"] += qty
-                stage_summary[st]["exp"] += exp_qty
-                stage_summary[st]["copper"] += cop
-                stage_summary[st]["levels"].append(row["level"])
+                # 构建表格行
+                prob_note = "必成功" if prob >= 100 else f"{prob}%"
+                unlock_info = row.get("unlock", "")
+                extra = exp_qty - qty
+                extra_note = f"(期望+{extra:.1f})" if extra > 0.01 else ""
+                
+                table_data.append([
+                    row["level"],
+                    mat,
+                    qty,
+                    f"{exp_qty:.1f}",
+                    extra_note,
+                    prob_note,
+                    f"{cop / 10000:.1f}万",
+                    unlock_info
+                ])
 
-                # 详情行
-                prob_note = "" if prob >= 100 else f"(基础{prob}%)"
-                unlock = f" ⚠{row['unlock']}" if row.get("unlock") else ""
-                detail_lines.append(
-                    f"  Lv{row['level']:>2}: {mat}×{qty:>4} → 期望{exp_qty:>8.1f}  {prob_note}{unlock}"
-                )
+            # 添加空行和汇总
+            if table_data:
+                table_data.append(["", "", "", "", "", "", "", ""])
+                
+                # 确定消耗汇总
+                for mat, amt in total_mats_det.items():
+                    exp_amt = total_mats_exp.get(mat, 0)
+                    extra = exp_amt - amt
+                    table_data.append([
+                        "总计-确定",
+                        mat,
+                        amt,
+                        "",
+                        "",
+                        "不考虑失败",
+                        "",
+                        ""
+                    ])
+                
+                table_data.append([
+                    "总计-确定",
+                    "铜钱",
+                    total_copper,
+                    "",
+                    "",
+                    "",
+                    f"{total_copper/10000:.1f}万",
+                    ""
+                ])
+                
+                table_data.append(["", "", "", "", "", "", "", ""])
+                
+                # 期望消耗汇总
+                for mat, amt in total_mats_exp.items():
+                    det_amt = total_mats_det.get(mat, 0)
+                    extra = amt - det_amt
+                    extra_note = f"+{extra:.1f}因失败" if extra > 0.01 else ""
+                    table_data.append([
+                        "总计-期望",
+                        mat,
+                        "",
+                        f"{amt:.1f}",
+                        extra_note,
+                        "含概率修正",
+                        "",
+                        ""
+                    ])
+                
+                table_data.append([
+                    "总计-期望",
+                    "铜钱",
+                    total_copper,
+                    "",
+                    "",
+                    "",
+                    f"{total_copper/10000:.1f}万",
+                    ""
+                ])
 
-            # 输出
-            lines = []
-            lines.append(f"━━━ 所需材料清单 ━━━\n")
-            lines.append(f"从 {start_lv}级 → {target_lv}级 | 位置: {'位置3' if is_pos3 else '位置1/2'}")
-            lines.append(f"共提升 {target_lv - start_lv} 级\n")
-
-            # 确定值表格
-            lines.append("┌─ 确定消耗（不考虑失败）──────────────────────┐")
+            # 显示表格
+            pos_str = "位置3" if is_pos3 else "位置1/2"
+            headers = [
+                "等级",
+                "材料名称",
+                "确定数量",
+                "期望数量",
+                "额外消耗",
+                "成功率",
+                "铜钱",
+                "解锁条件"
+            ]
+            title = f"宝石磨砺材料需求 ({pos_str}) - Lv.{start_lv}→Lv.{target_lv} (共{target_lv-start_lv}级)"
+            
+            # 在文本框中显示详细结果
+            output = f"✅ 计算完成\n\n"
+            output += f"{'='*50}\n"
+            output += f"起始等级: {start_lv}级\n"
+            output += f"目标等级: {target_lv}级\n"
+            output += f"提升等级: {target_lv - start_lv}级\n"
+            output += f"镶嵌位置: {pos_str}\n"
+            output += f"{'='*50}\n\n"
+            
+            output += "【确定消耗】(不考虑失败)\n"
             for mat, amt in total_mats_det.items():
-                lines.append(f"│  {mat:<10}  {amt:>8,.0f} 颗                       │")
-            lines.append(f"│  {'铜钱':<10}  {total_copper_det:>8,.0f} ({total_copper_det/10000:.1f}万)              │")
-            lines.append("└─────────────────────────────────────────────┘")
-
-            # 期望值表格
-            lines.append("\n┌─ 期望消耗（含失败概率修正）──────────────────┐")
+                output += f"  {mat}: {amt}颗\n"
+            output += f"  铜钱: {total_copper} ({total_copper/10000:.1f}万)\n\n"
+            
+            output += "【期望消耗】(含失败概率)\n"
             for mat, amt in total_mats_exp.items():
-                det_val = total_mats_det.get(mat, 0)
-                extra = amt - det_val
-                extra_str = f" (+{extra:.1f}因失败)" if extra > 0.01 else ""
-                lines.append(f"│  {mat:<10}  {amt:>8,.1f} 颗{extra_str:<18} │")
-            lines.append(f"│  {'铜钱':<10}  {total_copper_exp:>8,.0f} ({total_copper_exp/10000:.1f}万)              │")
-            lines.append("└─────────────────────────────────────────────┘")
-
-            # 分阶段汇总
-            lines.append("\n━ 各阶段汇总 ━")
-            for st in sorted(stage_summary.keys()):
-                ss = stage_summary[st]
-                lv_range = f"{ss['levels'][0]}-{ss['levels'][-1]}级"
-                lines.append(f"  第{st}阶段({lv_range}): {ss['mat']} 确定{ss['det']}颗 → "
-                           f"期望{ss['exp']:.1f}颗")
-
-            # 逐级详情
-            lines.append(f"\n━ 逐级详情（共{len(detail_lines)}级） ━")
-            for d in detail_lines:
-                lines.append(d)
-
-            lines.append("\n⚠ 期望值为平均值，实际可能上下浮动")
-            lines.append("⚠ 失败不消耗材料，但会累积提升成功率至100%")
-
-            self._show_result(self.t2_result, "\n".join(lines) + "\n")
+                det = total_mats_det.get(mat, 0)
+                extra = amt - det
+                output += f"  {mat}: {amt:.1f}颗 (+{extra:.1f})\n"
+            output += f"  铜钱: {total_copper} ({total_copper/10000:.1f}万)\n\n"
+            
+            output += f"{'='*50}\n\n"
+            
+            # 显示逐级详情（选择性）
+            output += "【逐级材料需求】\n"
+            for i, row in enumerate(table_data[:15]):  # 只显示前15级
+                if "总计" in str(row[0]):
+                    output += f"\n>>> {row[0]}: {row[1]} {row[2] if isinstance(row[2], str) else ''}\n"
+                elif isinstance(row[0], int):
+                    lv = row[0]
+                    if lv % 5 == 0 or lv == target_lv or i < 5:
+                        output += f"  Lv.{lv}: {row[1]}, 确定{row[2]}颗, 期望{row[3]:.1f}颗\n"
+            
+            if len(table_data) > 18:
+                output += f"\n... (仅显示部分，共{len(table_data)}行) ...\n"
+            
+            self._show_result(self.t2_result, output)
 
         except Exception as ex:
             self._show_error(self.t2_result, f"计算出错: {ex}")

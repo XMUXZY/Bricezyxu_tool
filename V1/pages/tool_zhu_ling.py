@@ -483,6 +483,7 @@ class ToolZhuLingPage(ctk.CTkFrame):
             command=self._calc_by_target,
         ).grid(row=6, column=0, columnspan=2, sticky="ew", pady=(8, 8))
 
+
         # 结果区域
         self.t2_result = ctk.CTkTextbox(
             tab2_inner, height=240, corner_radius=8,
@@ -491,6 +492,8 @@ class ToolZhuLingPage(ctk.CTkFrame):
         self.t2_result.grid(row=7, column=0, columnspan=2, sticky="ew", pady=(0, 0))
         self.t2_result.insert("1.0", "等待计算...\n")
         self.t2_result.configure(state="disabled")
+        # 阻止滚轮事件冒泡
+        self._bind_mousewheel(self.t2_result)
 
         # ---- 说明卡片 ----
         info_card = ctk.CTkFrame(scroll, fg_color="#1a1a2e", corner_radius=12)
@@ -565,6 +568,7 @@ class ToolZhuLingPage(ctk.CTkFrame):
         """Tab1 套装切换回调，刷新材料输入框"""
         self._build_material_inputs(self.t1_mat_frame)
 
+
     # ----------------------------------------------------------------
     #  辅助方法
     # ----------------------------------------------------------------
@@ -573,9 +577,22 @@ class ToolZhuLingPage(ctk.CTkFrame):
         textbox.delete("1.0", "end")
         textbox.insert("1.0", text)
         textbox.configure(state="disabled")
-
+    
     def _show_error(self, textbox: ctk.CTkTextbox, msg: str):
         self._show_result(textbox, f"⚠️ {msg}\n")
+    
+    def _bind_mousewheel(self, widget):
+        """绑定滚轮事件，阻止事件冒泡"""
+        def on_mousewheel(event):
+            # 只在widget内部处理滚轮事件，不让事件继续传播
+            widget._parent_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            return "break"  # 阻止事件冒泡
+        
+        # 绑定Windows/MacOS的滚轮事件
+        widget.bind("<MouseWheel>", on_mousewheel, add="+")
+        # 绑定Linux的滚轮事件
+        widget.bind("<Button-4>", lambda e: (widget._parent_canvas.yview_scroll(-1, "units"), "break")[1], add="+")
+        widget.bind("<Button-5>", lambda e: (widget._parent_canvas.yview_scroll(1, "units"), "break")[1], add="+")
 
     # ================================================================
     #  功能一：根据材料 → 算可达等级
@@ -603,22 +620,13 @@ class ToolZhuLingPage(ctk.CTkFrame):
         current_holdings = dict(holdings)
         reachable_lv = start_lv
 
-        lines = []
-        lines.append(f"{'='*45}")
-        lines.append(f"  {set_name}套 注灵养成计算结果")
-        lines.append(f"  起始等级：{start_lv}级 | 解锁角色等级：{rows[0]['解锁']}级")
-        lines.append(f"{'='*45}\n")
-
-        lines.append("【持有材料】")
-        for name, qty in holdings.items():
-            lines.append(f"  {name}: {qty}")
-        lines.append("")
-
         if start_lv >= 10:
-            lines.append("\n已满级(10级)，无需继续提升。")
-            self._show_result(self.t1_result, "\n".join(lines) + "\n")
+            self._show_error(self.t1_result, "已满级(10级)，无需继续提升。")
             return
 
+        # 构建表格数据
+        table_data = []
+        
         for lv_idx in range(start_lv, len(rows)):
             row_data = rows[lv_idx]
             lv = row_data["等级"]
@@ -628,66 +636,96 @@ class ToolZhuLingPage(ctk.CTkFrame):
             refresh_main_total = row_data["单级刷新主总"]
             refresh_bao_total = row_data["单级刷新保总"]
             refresh_bao_name = row_data["刷新保名"]
-
-            # 需要检查的材料
-            can_open = True
-            can_refresh = True
-
-            # 检查开启材料
-            open_avail = current_holdings.get(open_cost_name, 0)
-            if open_avail < open_need:
-                can_open = False
-
-            # 检查重刷主材
             refresh_main_name = row_data["刷新主名"]
+
+            # 检查材料是否充足
+            open_avail = current_holdings.get(open_cost_name, 0)
             refresh_main_avail = current_holdings.get(refresh_main_name, 0)
-            if refresh_main_avail < refresh_main_total:
-                can_refresh = False
-
-            # 检查保底材料
             bao_avail = current_holdings.get(refresh_bao_name, 0)
-            if bao_avail < refresh_bao_total:
-                can_refresh = False
+            
+            can_open = open_avail >= open_need
+            can_refresh = (refresh_main_avail >= refresh_main_total and 
+                          bao_avail >= refresh_bao_total)
 
+            # 构建行数据（材料名称和数量分列）
             if not can_open or not can_refresh:
-                lines.append(f"\n--- Lv.{lv} ---")
-                if not can_open:
-                    lack = open_need - open_avail
-                    lines.append(f"  ❌ 开启不足：{open_cost_name} 差 {lack}"
-                                 f" (需要{open_need}，持有{open_avail})")
-                if not can_refresh:
-                    rm_lack = refresh_main_total - refresh_main_avail
-                    b_lack = refresh_bao_total - bao_avail
-                    lines.append(f"  ❌ 重刷不足：{refresh_main_name} 差 {rm_lack}"
-                                 f" / {refresh_bao_name} 差 {b_lack}")
+                # 材料不足
+                status = "❌ 材料不足"
+                
+                # 缺少量备注
+                open_lack = f"(差{open_need - open_avail})" if not can_open else ""
+                main_lack = f"(差{refresh_main_total - refresh_main_avail})" if refresh_main_avail < refresh_main_total else ""
+                bao_lack = f"(差{refresh_bao_total - bao_avail})" if bao_avail < refresh_bao_total else ""
+                
+                table_data.append([
+                    f"Lv.{lv}",
+                    open_cost_name,
+                    open_need,
+                    open_lack,
+                    refresh_main_name,
+                    refresh_main_total,
+                    main_lack,
+                    refresh_bao_name,
+                    refresh_bao_total,
+                    bao_lack,
+                    status
+                ])
                 break
+            else:
+                # 材料充足，扣除消耗
+                current_holdings[open_cost_name] = open_avail - open_need
+                current_holdings[refresh_main_name] = refresh_main_avail - refresh_main_total
+                current_holdings[refresh_bao_name] = bao_avail - refresh_bao_total
+                reachable_lv = lv
 
-            # 扣除消耗
-            current_holdings[open_cost_name] = open_avail - open_need
-            current_holdings[refresh_main_name] = refresh_main_avail - refresh_main_total
-            current_holdings[refresh_bao_name] = bao_avail - refresh_bao_total
-            reachable_lv = lv
+                table_data.append([
+                    f"Lv.{lv}",
+                    open_cost_name,
+                    open_need,
+                    "",
+                    refresh_main_name,
+                    refresh_main_total,
+                    "",
+                    refresh_bao_name,
+                    refresh_bao_total,
+                    "",
+                    "✅ 已达成"
+                ])
 
-            lines.append(f"  Lv.{lv} ✅ 已达成"
-                         f" | 开启:{open_cost_name}-{open_need}"
-                         f" | 刷新主:{refresh_main_total}"
-                         f" | 刷新保:{refresh_bao_name}-{refresh_bao_total}")
-
-        # 结果汇总
-        lines.append(f"\n{'='*45}")
-        lines.append(f"  可达最高等级：Lv.{reachable_lv}/10")
-        lines.append(f"  共提升了 {reachable_lv - start_lv} 个等级")
-        lines.append(f"\n【剩余材料】")
-        has_left = False
-        for name, qty in current_holdings.items():
-            if qty > 0:
-                lines.append(f"  {name}: {qty}")
-                has_left = True
-        if not has_left:
-            lines.append("  无剩余")
-        lines.append(f"{'='*45}")
-
-        self._show_result(self.t1_result, "\n".join(lines) + "\n")
+        # 显示表格
+        headers = [
+            "目标等级",
+            "开启材料名", "开启数量", "备注",
+            "刷新主材名", "主材数量", "备注",
+            "刷新保材名", "保材数量", "备注",
+            "状态"
+        ]
+        title = f"{set_name}套注灵养成计算 (起始Lv.{start_lv} → 最高Lv.{reachable_lv})"
+        
+        # 在文本框中显示详细结果
+        output = f"✅ 计算完成\n\n"
+        output += f"{'='*50}\n"
+        output += f"套装: {set_name}\n"
+        output += f"起始等级: Lv.{start_lv}\n"
+        output += f"可达等级: Lv.{reachable_lv}\n"
+        output += f"提升等级: {reachable_lv - start_lv} 级\n"
+        output += f"{'='*50}\n\n"
+        
+        # 显示升级路径（每5级显示一次）
+        output += "【升级路径】\n"
+        for i, row in enumerate(table_data):
+            lv = row[1]  # 获取等级
+            if isinstance(lv, int):
+                # 只显示每5级或最后一级
+                if lv % 5 == 0 or lv == reachable_lv or i < 3:
+                    cost_str = row[3] if len(row) > 3 else ""
+                    cumulative_str = row[4] if len(row) > 4 else ""
+                    output += f"  Lv.{lv}: 能力值 {row[2]}, 消耗 {cost_str}, 累计 {cumulative_str}\n"
+        
+        if len(table_data) > 20:
+            output += f"\n... (共{len(table_data)}级，仅显示关键节点) ...\n"
+        
+        self._show_result(self.t1_result, output)
 
     # ================================================================
     #  功能二：根据目标等级 → 算材料需求
@@ -710,18 +748,10 @@ class ToolZhuLingPage(ctk.CTkFrame):
             self._show_error(self.t2_result, "目标等级需大于起始等级。")
             return
 
-        lines = []
         unlock = rows[0]["解锁"]
-        lines.append(f"{'='*48}")
-        lines.append(f"  {set_name}套 Lv.{start_lv} → Lv.{target_lv}")
-        lines.append(f"  解锁角色等级：{unlock}级 | 覆盖部位：11个")
-        lines.append(f"{'='*48}\n")
-
-        # 逐级明细
-        lines.append(f"{'等级':<6} {'开启材料':<16} {'开启量':>5} | "
-                     f"{'刷新主材':>6} {'刷新保材':>6}")
-        lines.append("-" * 55)
-
+        
+        # 构建表格数据
+        table_data = []
         total_open = {}       # {material_name: total_count}
         total_refresh_m = {}
         total_refresh_b = {}
@@ -729,50 +759,124 @@ class ToolZhuLingPage(ctk.CTkFrame):
         for lv_idx in range(start_lv, target_lv):
             r = rows[lv_idx]
             lv = r["等级"]
-            oname = r["开启名"]; oqty = r["开启全位"]
-            rn = r["刷新主名"]; rq = r["单级刷新主总"]
-            bn = r["刷新保名"]; bq = r["单级刷新保总"]
+            oname = r["开启名"]
+            oqty = r["开启全位"]
+            rn = r["刷新主名"]
+            rq = r["单级刷新主总"]
+            bn = r["刷新保名"]
+            bq = r["单级刷新保总"]
 
             total_open[oname] = total_open.get(oname, 0) + oqty
             total_refresh_m[rn] = total_refresh_m.get(rn, 0) + rq
             total_refresh_b[bn] = total_refresh_b.get(bn, 0) + bq
 
-            lines.append(
-                f"Lv.{lv:<5} {oname:<16} {oqty:>5} | "
-                f"{rn:>6} {bn:>6}"
-            )
+            table_data.append([
+                f"Lv.{lv}",
+                oname,
+                oqty,
+                rn,
+                rq,
+                bn,
+                bq,
+                f"全套11部位"
+            ])
 
-        lines.append("")
-        lines.append("=" * 48)
-        lines.append(f"  全套11部位 · Lv.{start_lv}→{target_lv} 总消耗")
-        lines.append("=" * 48)
-        lines.append("")
-        lines.append("【开启材料累计】")
-        for name, qty in total_open.items():
-            lines.append(f"  {name}: {qty}  (单部位 {int(qty/11)})")
-        lines.append("")
-        lines.append("【重刷主材料累计（带保底期望）】")
-        for name, qty in total_refresh_m.items():
-            lines.append(f"  {name}: {qty}  (单部位 {int(qty/11)})")
-        lines.append("")
-        lines.append("【保底材料累计（带保底期望）】")
-        for name, qty in total_refresh_b.items():
-            lines.append(f"  {name}: {qty}  (单部位 {int(qty/11)})")
-        lines.append("")
+        # 添加空行分隔
+        table_data.append(["", "", "", "", "", "", "", ""])
+        
+        # 添加汇总行
+        for mat_name, mat_qty in total_open.items():
+            single_part = int(mat_qty / 11)
+            table_data.append([
+                "总计-开启",
+                mat_name,
+                mat_qty,
+                "",
+                "",
+                "",
+                "",
+                f"单部位: {single_part}"
+            ])
+        
+        for mat_name, mat_qty in total_refresh_m.items():
+            single_part = int(mat_qty / 11)
+            table_data.append([
+                "总计-刷新主",
+                "",
+                "",
+                mat_name,
+                mat_qty,
+                "",
+                "",
+                f"单部位: {single_part}"
+            ])
+        
+        for mat_name, mat_qty in total_refresh_b.items():
+            single_part = int(mat_qty / 11)
+            table_data.append([
+                "总计-刷新保",
+                "",
+                "",
+                "",
+                "",
+                mat_name,
+                mat_qty,
+                f"单部位: {single_part}"
+            ])
 
-        # 满级总览（如果目标是10级）
-        if target_lv == 10:
-            last_r = rows[9]
-            lines.append("-" * 48)
-            lines.append(f"  满级(10级)总消耗速查：")
-            lines.append(f"  主材料总计: {last_r['累计开启'] + last_r['累计刷新主']}")
-            lines.append(f"  保底材料总计: {last_r['累计刷新保']} ({last_r['刷新保名']})")
-            lines.append(f"{'-' * 48}")
-
-        lines.append("")
-        lines.append("> 以上重刷消耗均为使用保底材料的期望值（每级期望6次出红）")
-
-        self._show_result(self.t2_result, "\n".join(lines) + "\n")
+        # 显示表格
+        headers = [
+            "等级",
+            "开启材料名", "开启数量",
+            "刷新主材名", "主材数量",
+            "刷新保材名", "保材数量",
+            "说明"
+        ]
+        title = f"{set_name}套注灵材料需求 (Lv.{start_lv}→Lv.{target_lv}) · 解锁等级{unlock}"
+        
+        # 在文本框中显示详细结果
+        output = f"✅ 计算完成\n\n"
+        output += f"{'='*50}\n"
+        output += f"套装: {set_name}套\n"
+        output += f"等级跨度: Lv.{start_lv} → Lv.{target_lv}\n"
+        output += f"解锁等级: {unlock}级\n"
+        output += f"覆盖部位: 11个\n"
+        output += f"{'='*50}\n\n"
+        
+        output += "【总消耗汇总】\n"
+        if total_open:
+            output += "开启材料:\n"
+            for name, qty in total_open.items():
+                output += f"  {name} × {qty}\n"
+        
+        if total_refresh_m:
+            output += "\n刷新主材:\n"
+            for name, qty in total_refresh_m.items():
+                output += f"  {name} × {qty}\n"
+        
+        if total_refresh_b:
+            output += "\n刷新保材:\n"
+            for name, qty in total_refresh_b.items():
+                output += f"  {name} × {qty}\n"
+        
+        output += f"\n{'='*50}\n\n"
+        
+        # 显示每级详情（选择性显示）
+        output += "【逐级材料需求】\n"
+        for i, row in enumerate(table_data[:15]):  # 只显示前15行
+            if row[0] == "总计-开启":
+                output += f"\n>>> {row[0]}: {row[6]} × {row[7]}\n"
+            elif row[0] == "总计-刷新主":
+                output += f">>> {row[0]}: {row[6]} × {row[7]} ({row[8]})\n"
+            elif row[0] == "总计-刷新保":
+                output += f">>> {row[0]}: {row[6]} × {row[7]} ({row[8]})\n"
+            elif row[0]:  # 等级行
+                output += f"  Lv.{row[0]}: {row[1]} × {row[2]}, {row[3]} × {row[4]}, {row[5]} × {row[6]}\n"
+        
+        if len(table_data) > 18:
+            output += f"\n... (仅显示部分，共{len(table_data)}行) ...\n"
+        
+        self._show_result(self.t2_result, output)
 
     # ----------------------------------------------------------------
     #  辅助方法（保留旧接口兼容）
