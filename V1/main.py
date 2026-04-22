@@ -86,7 +86,6 @@ class App(ctk.CTk):
         # ---- 构建界面 ----
         self._build_layout()
         self._build_nav()
-        self._build_content_area()
 
         # 默认显示首页（懒加载：仅创建当前需要的页面）
         if NAV_ITEMS:
@@ -200,9 +199,6 @@ class App(ctk.CTk):
         )
         self.nav_buttons[name] = btn
         return btn
-
-    def _build_content_area(self):
-        pass
 
     def _get_or_create_page(self, page_name: str, page_class: Type[ctk.CTkFrame]) -> ctk.CTkFrame:
         """获取已缓存的页面实例，不存在则创建"""

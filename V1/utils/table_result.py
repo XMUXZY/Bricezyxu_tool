@@ -68,7 +68,7 @@ class TableResultWindow(ctk.CTkToplevel):
         
         ctk.CTkLabel(
             title_frame,
-            text=f"共 {len(self.data)} 行数据",
+            text=f"共 {len(self.data)} 行数据 · 支持框选和Ctrl+C复制",
             font=ctk.CTkFont(size=12),
             text_color="gray",
         ).pack(side="right")
@@ -86,9 +86,9 @@ class TableResultWindow(ctk.CTkToplevel):
         
         ctk.CTkButton(
             btn_frame,
-            text="📋 复制为Excel格式",
+            text="📋 复制全部为Excel格式",
             command=self._copy_as_excel,
-            width=160,
+            width=180,
             height=36,
         ).pack(side="left", padx=5)
         
@@ -118,8 +118,12 @@ class TableResultWindow(ctk.CTkToplevel):
             hover_color="gray30",
         ).pack(side="right", padx=5)
         
+        # 绑定快捷键
+        self.bind("<Control-a>", self._select_all)
+        self.bind("<Control-A>", self._select_all)
+        
     def _render_table(self, parent):
-        """渲染表格"""
+        """渲染表格（使用可选择的Entry组件）"""
         # 计算每列的最大宽度
         col_widths = []
         num_cols = len(self.headers) if self.headers else (len(self.data[0]) if self.data else 0)
@@ -144,19 +148,24 @@ class TableResultWindow(ctk.CTkToplevel):
         
         current_row = 0
         
+        # 保存所有Entry组件用于批量操作
+        self.cell_entries = []
+        
         # 表头
         if self.headers:
             for col_idx, header in enumerate(self.headers):
-                cell = ctk.CTkLabel(
+                cell = ctk.CTkEntry(
                     parent,
-                    text=str(header),
                     font=ctk.CTkFont(size=13, weight="bold"),
-                    anchor="center",
+                    justify="center",
                     width=col_widths[col_idx],
                     height=35,
                     fg_color="#1f538d",
                     text_color="white",
+                    border_width=0,
                 )
+                cell.insert(0, str(header))
+                cell.configure(state="readonly")  # 只读模式，可选择但不可编辑
                 cell.grid(row=current_row, column=col_idx, padx=1, pady=1, sticky="ew")
                 parent.grid_columnconfigure(col_idx, weight=0, minsize=col_widths[col_idx])
             
@@ -167,17 +176,19 @@ class TableResultWindow(ctk.CTkToplevel):
             # 奇偶行不同颜色
             row_color = "#2b2b2b" if row_idx % 2 == 0 else "#333333"
             
+            row_entries = []
             for col_idx, cell_value in enumerate(row_data):
-                cell = ctk.CTkLabel(
+                cell = ctk.CTkEntry(
                     parent,
-                    text=str(cell_value),
                     font=ctk.CTkFont(size=12),
-                    anchor="w",
+                    justify="left",
                     width=col_widths[col_idx] if col_idx < len(col_widths) else 120,
                     height=32,
                     fg_color=row_color,
-                    padx=10,
+                    border_width=0,
                 )
+                cell.insert(0, str(cell_value))
+                cell.configure(state="readonly")  # 只读模式，可选择但不可编辑
                 cell.grid(
                     row=current_row + row_idx,
                     column=col_idx,
@@ -185,6 +196,16 @@ class TableResultWindow(ctk.CTkToplevel):
                     pady=1,
                     sticky="ew",
                 )
+                row_entries.append(cell)
+            
+            self.cell_entries.append(row_entries)
+    
+    def _select_all(self, event=None):
+        """全选功能：选中当前焦点Entry的全部内容"""
+        widget = self.focus_get()
+        if isinstance(widget, ctk.CTkEntry):
+            widget.select_range(0, "end")
+            return "break"
     
     def _copy_as_excel(self):
         """复制为Excel格式（制表符分隔）"""
