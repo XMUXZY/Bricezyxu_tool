@@ -29,7 +29,9 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: V23-tauri
-        run: npm install
+        run: |
+          npm install
+          node node_modules/esbuild/install.js
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
