@@ -1,0 +1,5 @@
+node_modules
+dist
+.tauri-private-key
+.tauri-private-key.pub
+target
