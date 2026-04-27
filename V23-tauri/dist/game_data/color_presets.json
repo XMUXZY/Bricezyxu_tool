@@ -1,0 +1,45 @@
+{
+  "_comment": "游戏颜色预设配置",
+  "color_presets": {
+    "白色": "#ffffff",
+    "灰色": "#b3b3b3",
+    "绿色": "#00ff00",
+    "蓝色": "#3399ff",
+    "紫色": "#cc66ff",
+    "橙色": "#ff9900",
+    "红色": "#ff0000",
+    "金色": "#ffd700",
+    "青色": "#00ffff",
+    "粉色": "#ff69b4",
+    "黄色": "#ffff00",
+    "深蓝": "#0066cc",
+    "深紫": "#9933ff",
+    "深红": "#cc0000",
+    "浅绿": "#66ff66",
+    "浅蓝": "#66ccff",
+    "浅紫": "#cc99ff",
+    "浅橙": "#ffcc66",
+    "淡黄": "#ffffcc",
+    "暗金": "#cc9900",
+    "天蓝": "#87ceeb",
+    "品质白": "#f0f0f0"
+  },
+  "sample_texts": [
+    {
+      "name": "示例1：多彩文本",
+      "content": "<color=#ff0000>红色</color><color=#00ff00>绿色</color><color=#0000ff>蓝色</color>"
+    },
+    {
+      "name": "示例2：品质标识",
+      "content": "<color=white>普通</color> <color=#00ff00>精良</color> <color=#0066ff>稀有</color> <color=#cc00ff>史诗</color> <color=#ff6600>传说</color>"
+    },
+    {
+      "name": "示例3：游戏公告",
+      "content": "恭喜玩家<color=#ffd700>【龙战天下】</color>获得<color=#ff0000>神器：屠龙刀</color>，战力提升<color=#00ff00>+99999</color>！"
+    },
+    {
+      "name": "示例4：邮件内容",
+      "content": "尊敬的勇士，您获得了<color=#ffd700>VIP礼包</color>×1，包含：<color=#ff6600>钻石×1000</color>、<color=#00ff00>金币×50000</color>、<color=#cc00ff>传说宝箱×3</color>。"
+    }
+  ]
+}

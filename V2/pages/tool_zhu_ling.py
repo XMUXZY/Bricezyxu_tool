@@ -1,0 +1,579 @@
+"""
+注灵养成计算器（v2）
+基于经典区注灵配置表 + 保底材料重刷期望，支持两种模式：
+  模式一：根据持有材料 → 算可达到的注灵等级
+  模式二：根据目标等级   → 算全套/单部位材料需求
+数据来源：注灵养成数据_经典区v2.xlsx
+"""
+
+import customtkinter as ctk
+from pages.base_tool import BaseToolPage
+
+from calculators.calc_zhu_ling import (
+    PART_NAMES, SET_NAMES, DATA,
+    get_set_data, get_materials,
+    set_display, calc_by_materials, calc_by_target,
+)
+
+
+class ToolZhuLingPage(BaseToolPage):
+    """注灵养成计算器界面（参考重铸工具布局）"""
+
+    def __init__(self, parent, colors: dict):
+        super().__init__(parent, colors)
+        self._set_var = None           # Tab1 套装选择
+        self._mat_entries: dict = {}   # 材料输入框 {name: CTkEntry}
+        self._build_ui()
+
+    # ================================================================
+    #  界面构建（与 tool_c 重铸工具一致：SegmentedButton + Tab 切换）
+    # ================================================================
+    def _build_ui(self):
+        # 主滚动容器
+        scroll = ctk.CTkScrollableFrame(self, fg_color="transparent", corner_radius=0)
+        scroll.pack(fill="both", expand=True, padx=30, pady=20)
+        scroll.grid_columnconfigure(0, weight=1)
+
+        # ---- 页面标题 ----
+        ctk.CTkLabel(
+            scroll,
+            text="⚔️ 注灵养成计算器",
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color="#ffffff",
+            anchor="w",
+        ).grid(row=0, column=0, sticky="w", pady=(0, 8))
+
+        ctk.CTkLabel(
+            scroll,
+            text=f"共 {len(SET_NAMES)} 套注灵体系 · 每套 10 等级 · 全套 11 部位",
+            font=ctk.CTkFont(size=12),
+            text_color=self.colors["text_dim"],
+            anchor="w",
+        ).grid(row=1, column=0, sticky="w", pady=(0, 15))
+
+        # ---- 标签页切换 ----
+        tab_frame = ctk.CTkFrame(scroll, fg_color="transparent")
+        tab_frame.grid(row=2, column=0, sticky="ew", pady=(0, 12))
+
+        self.tab_seg = ctk.CTkSegmentedButton(
+            tab_frame,
+            values=["📊 根据材料计算等级", "🎯 根据目标计算材料"],
+            height=34,
+            font=ctk.CTkFont(size=13),
+            selected_color=self.colors.get("nav_active", "#0f3460"),
+            unselected_color="#0f0f1a",
+            selected_hover_color="#164080",
+            command=self._on_tab_change,
+        )
+        self.tab_seg.pack(fill="x")
+        self.tab_seg.set("📊 根据材料计算等级")
+
+        # ============================================================
+        # Tab 1：根据持有材料计算可达注灵等级
+        # ============================================================
+        self.tab1_frame = ctk.CTkFrame(scroll, fg_color="#1a1a2e", corner_radius=12)
+        self.tab1_frame.grid(row=3, column=0, sticky="ew", pady=(0, 15))
+
+        tab1_inner = ctk.CTkFrame(self.tab1_frame, fg_color="transparent")
+        tab1_inner.pack(fill="x", padx=20, pady=18)
+        tab1_inner.grid_columnconfigure((0, 1), weight=1)
+
+        # 初始状态标题
+        ctk.CTkLabel(
+            tab1_inner, text="初始注灵状态",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#ffffff", anchor="w",
+        ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
+
+        # 套装选择
+        ctk.CTkLabel(tab1_inner, text="注灵套装",
+                     font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"], anchor="w").grid(
+            row=1, column=0, sticky="w", padx=(0, 10), pady=(0, 3))
+        self._set_var = ctk.StringVar(value=SET_NAMES[0])
+        self.t1_set_menu = ctk.CTkOptionMenu(
+            tab1_inner, variable=self._set_var,
+            values=SET_NAMES, height=32, corner_radius=6,
+            fg_color="#0f3460", button_color="#0f3460",
+            button_hover_color="#16213e",
+            command=self._on_set_changed_tab1,
+        )
+        self.t1_set_menu.grid(row=2, column=0, sticky="ew", padx=(0, 10), pady=(0, 8))
+
+        # 起始等级
+        ctk.CTkLabel(tab1_inner, text="起始等级 (0-10)",
+                     font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"], anchor="w").grid(
+            row=1, column=1, sticky="w", padx=(10, 0), pady=(0, 3))
+        self.t1_start_lv = ctk.CTkEntry(tab1_inner, placeholder_text="0", height=32, corner_radius=6)
+        self.t1_start_lv.grid(row=2, column=1, sticky="ew", padx=(10, 0), pady=(0, 8))
+        self.t1_start_lv.insert(0, "0")
+
+        # ---- 材料输入（动态） ----
+        ctk.CTkLabel(tab1_inner, text="持有材料数量",
+                     font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"], anchor="w").grid(
+            row=3, column=0, columnspan=2, sticky="w", pady=(6, 3))
+
+        self.t1_mat_frame = ctk.CTkFrame(tab1_inner, fg_color="transparent")
+        self.t1_mat_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        self._build_material_inputs(self.t1_mat_frame)
+
+        # 计算按钮
+        ctk.CTkButton(
+            tab1_inner,
+            text="▶  计算可达到的注灵等级",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40, corner_radius=8,
+            fg_color="#0f3460", hover_color="#16213e",
+            command=self._calc_by_materials,
+        ).grid(row=5, column=0, columnspan=2, sticky="ew", pady=(8, 8))
+
+        # 结果区域
+        self.t1_result = ctk.CTkTextbox(
+            tab1_inner, height=180, corner_radius=8,
+            fg_color="#0f0f1a", font=ctk.CTkFont(family="Microsoft YaHei UI", size=12),
+        )
+        self.t1_result.grid(row=6, column=0, columnspan=2, sticky="ew", pady=(0, 0))
+        self.t1_result.insert("1.0", "等待计算...\n")
+        self.t1_result.configure(state="disabled")
+
+        # ============================================================
+        # Tab 2：根据目标等级计算所需材料
+        # ============================================================
+        self.tab2_frame = ctk.CTkFrame(scroll, fg_color="#1a1a2e", corner_radius=12)
+        # 不立即 grid，由标签页切换控制
+
+        tab2_inner = ctk.CTkFrame(self.tab2_frame, fg_color="transparent")
+        tab2_inner.pack(fill="x", padx=20, pady=18)
+        tab2_inner.grid_columnconfigure((0, 1), weight=1)
+
+        # 初始状态
+        ctk.CTkLabel(
+            tab2_inner, text="初始注灵状态",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#ffffff", anchor="w",
+        ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
+
+        ctk.CTkLabel(tab2_inner, text="起始等级 (0-10)",
+                     font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"], anchor="w").grid(
+            row=1, column=0, sticky="w", padx=(0, 10), pady=(0, 3))
+        self.t2_start_lv = ctk.CTkEntry(tab2_inner, placeholder_text="0", height=32, corner_radius=6)
+        self.t2_start_lv.grid(row=2, column=0, sticky="ew", padx=(0, 10), pady=(0, 8))
+        self.t2_start_lv.insert(0, "0")
+
+        ctk.CTkLabel(tab2_inner, text="注灵套装",
+                     font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"], anchor="w").grid(
+            row=1, column=1, sticky="w", padx=(10, 0), pady=(0, 3))
+        self.t2_set_var = ctk.StringVar(value=SET_NAMES[0])
+        self.t2_set_menu = ctk.CTkOptionMenu(
+            tab2_inner, variable=self.t2_set_var,
+            values=SET_NAMES, height=32, corner_radius=6,
+            fg_color="#0f3460", button_color="#0f3460",
+            button_hover_color="#16213e",
+        )
+        self.t2_set_menu.grid(row=2, column=1, sticky="ew", padx=(10, 0), pady=(0, 8))
+
+        # 目标状态
+        ctk.CTkLabel(
+            tab2_inner, text="目标注灵状态",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#ffffff", anchor="w",
+        ).grid(row=3, column=0, columnspan=2, sticky="w", pady=(10, 8))
+
+        ctk.CTkLabel(tab2_inner, text="目标等级 (0-10)",
+                     font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"], anchor="w").grid(
+            row=4, column=0, sticky="w", padx=(0, 10), pady=(0, 3))
+        self.t2_target_lv = ctk.CTkEntry(tab2_inner, placeholder_text="10", height=32, corner_radius=6)
+        self.t2_target_lv.grid(row=5, column=0, sticky="ew", padx=(0, 10), pady=(0, 8))
+        self.t2_target_lv.insert(0, "10")
+
+        # 计算按钮
+        ctk.CTkButton(
+            tab2_inner,
+            text="▶  计算所需材料",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40, corner_radius=8,
+            fg_color="#2e7d32", hover_color="#1b5e20",
+            command=self._calc_by_target,
+        ).grid(row=6, column=0, columnspan=2, sticky="ew", pady=(8, 8))
+
+
+        # 结果区域
+        self.t2_result = ctk.CTkTextbox(
+            tab2_inner, height=240, corner_radius=8,
+            fg_color="#0f0f1a", font=ctk.CTkFont(family="Microsoft YaHei UI", size=12),
+        )
+        self.t2_result.grid(row=7, column=0, columnspan=2, sticky="ew", pady=(0, 0))
+        self.t2_result.insert("1.0", "等待计算...\n")
+        self.t2_result.configure(state="disabled")
+        # 阻止滚轮事件冒泡
+        self._bind_mousewheel(self.t2_result)
+
+        # ---- 说明卡片 ----
+        info_card = ctk.CTkFrame(scroll, fg_color="#1a1a2e", corner_radius=12)
+        info_card.grid(row=4, column=0, sticky="ew", pady=(0, 10))
+
+        info_inner = ctk.CTkFrame(info_card, fg_color="transparent")
+        info_inner.pack(fill="x", padx=20, pady=15)
+
+        ctk.CTkLabel(
+            info_inner,
+            text="📖 使用说明",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#ffffff", anchor="w",
+        ).pack(fill="x", pady=(0, 8))
+
+        rules = [
+            "• 功能一：输入持有的各材料数量 + 起始等级 → 算最多能升到几级",
+            "• 功能二：设定起始/目标等级 → 算全套11部位逐级材料消耗明细",
+            "",
+            f"共 {len(SET_NAMES)} 套注灵体系（{SET_NAMES[0]} ~ {SET_NAMES[-1]}），每套 10 个等级",
+            "所有重刷消耗均为使用保底材料的期望值（每级期望6次出红色）。",
+        ]
+        for rule in rules:
+            ctk.CTkLabel(
+                info_inner, text=rule,
+                font=ctk.CTkFont(size=12),
+                text_color=self.colors["text_dim"], anchor="w",
+            ).pack(fill="x", pady=1)
+
+    # ================================================================
+    #  标签页切换
+    # ================================================================
+
+    def _on_tab_change(self, value):
+        """切换标签页（与 tool_c 一致的 grid/grid_forget 模式）"""
+        if value == "📊 根据材料计算等级":
+            self.tab1_frame.grid(row=3, column=0, sticky="ew", pady=(0, 15))
+            self.tab2_frame.grid_forget()
+        else:
+            self.tab2_frame.grid(row=3, column=0, sticky="ew", pady=(0, 15))
+            self.tab1_frame.grid_forget()
+
+    # ================================================================
+    #  材料输入区（Tab1 动态生成）
+    # ================================================================
+    def _build_material_inputs(self, parent):
+        """根据当前套装重建材料输入框"""
+        for w in parent.winfo_children():
+            w.destroy()
+        self._mat_entries.clear()
+
+        mats = get_materials(self._set_var.get())
+        cols = min(len(mats), 3)
+        for i, mname in enumerate(mats):
+            col_i = i % cols
+
+            ctk.CTkLabel(parent, text=mname, font=ctk.CTkFont(size=12),
+                         text_color=self.colors["text"], anchor="w"
+                         ).grid(row=i // cols * 2, column=col_i, sticky="w", padx=(0, 5), pady=(2, 0))
+
+            entry = ctk.CTkEntry(
+                parent, width=120, height=30,
+                placeholder_text="数量",
+                font=ctk.CTkFont(size=12),
+                fg_color="#0f0f1a", corner_radius=6,
+            )
+            entry.insert(0, "0")
+            entry.grid(row=i // cols * 2 + 1, column=col_i, sticky="w", padx=(0, 10), pady=(0, 6))
+            self._mat_entries[mname] = entry
+
+    def _on_set_changed_tab1(self, value=None):
+        """Tab1 套装切换回调，刷新材料输入框"""
+        self._build_material_inputs(self.t1_mat_frame)
+
+
+    # ----------------------------------------------------------------
+    #  辅助方法
+    # ----------------------------------------------------------------
+    # ================================================================
+    #  功能一：根据材料 → 算可达等级
+    # ================================================================
+    def _calc_by_materials(self):
+        try:
+            set_name = self._set_var.get()
+            start_lv = int(self.t1_start_lv.get() or "0")
+        except ValueError:
+            self._show_error(self.t1_result, "起始等级请输入有效数字！")
+            return
+
+        rows = get_set_data(set_name)
+        if not rows:
+            self._show_error(self.t1_result, "未找到套装数据。")
+            return
+
+        # 收集用户输入的材料量
+        holdings = {}
+        for name, entry in self._mat_entries.items():
+            txt = entry.get().strip()
+            holdings[name] = int(txt) if txt else 0
+
+        # 从起始等级逐级向上模拟
+        current_holdings = dict(holdings)
+        reachable_lv = start_lv
+
+        if start_lv >= 10:
+            self._show_error(self.t1_result, "已满级(10级)，无需继续提升。")
+            return
+
+        # 构建表格数据
+        table_data = []
+        
+        for lv_idx in range(start_lv, len(rows)):
+            row_data = rows[lv_idx]
+            lv = row_data["等级"]
+
+            open_cost_name = row_data["开启名"]
+            open_need = row_data["开启全位"]
+            refresh_main_total = row_data["单级刷新主总"]
+            refresh_bao_total = row_data["单级刷新保总"]
+            refresh_bao_name = row_data["刷新保名"]
+            refresh_main_name = row_data["刷新主名"]
+
+            # 检查材料是否充足
+            open_avail = current_holdings.get(open_cost_name, 0)
+            refresh_main_avail = current_holdings.get(refresh_main_name, 0)
+            bao_avail = current_holdings.get(refresh_bao_name, 0)
+            
+            can_open = open_avail >= open_need
+            can_refresh = (refresh_main_avail >= refresh_main_total and 
+                          bao_avail >= refresh_bao_total)
+
+            # 构建行数据（材料名称和数量分列）
+            if not can_open or not can_refresh:
+                # 材料不足
+                status = "❌ 材料不足"
+                
+                # 缺少量备注
+                open_lack = f"(差{open_need - open_avail})" if not can_open else ""
+                main_lack = f"(差{refresh_main_total - refresh_main_avail})" if refresh_main_avail < refresh_main_total else ""
+                bao_lack = f"(差{refresh_bao_total - bao_avail})" if bao_avail < refresh_bao_total else ""
+                
+                table_data.append([
+                    f"Lv.{lv}",
+                    open_cost_name,
+                    open_need,
+                    open_lack,
+                    refresh_main_name,
+                    refresh_main_total,
+                    main_lack,
+                    refresh_bao_name,
+                    refresh_bao_total,
+                    bao_lack,
+                    status
+                ])
+                break
+            else:
+                # 材料充足，扣除消耗
+                current_holdings[open_cost_name] = open_avail - open_need
+                current_holdings[refresh_main_name] = refresh_main_avail - refresh_main_total
+                current_holdings[refresh_bao_name] = bao_avail - refresh_bao_total
+                reachable_lv = lv
+
+                table_data.append([
+                    f"Lv.{lv}",
+                    open_cost_name,
+                    open_need,
+                    "",
+                    refresh_main_name,
+                    refresh_main_total,
+                    "",
+                    refresh_bao_name,
+                    refresh_bao_total,
+                    "",
+                    "✅ 已达成"
+                ])
+
+        # 显示表格
+        headers = [
+            "目标等级",
+            "开启材料名", "开启数量", "备注",
+            "刷新主材名", "主材数量", "备注",
+            "刷新保材名", "保材数量", "备注",
+            "状态"
+        ]
+        title = f"{set_name}套注灵养成计算 (起始Lv.{start_lv} → 最高Lv.{reachable_lv})"
+        
+        # 在文本框中显示详细结果
+        output = f"✅ 计算完成\n\n"
+        output += f"{'='*50}\n"
+        output += f"套装: {set_name}\n"
+        output += f"起始等级: Lv.{start_lv}\n"
+        output += f"可达等级: Lv.{reachable_lv}\n"
+        output += f"提升等级: {reachable_lv - start_lv} 级\n"
+        output += f"{'='*50}\n\n"
+        
+        # 显示升级路径（每5级显示一次）
+        output += "【升级路径】\n"
+        for i, row in enumerate(table_data):
+            lv = row[1]  # 获取等级
+            if isinstance(lv, int):
+                # 只显示每5级或最后一级
+                if lv % 5 == 0 or lv == reachable_lv or i < 3:
+                    cost_str = row[3] if len(row) > 3 else ""
+                    cumulative_str = row[4] if len(row) > 4 else ""
+                    output += f"  Lv.{lv}: 能力值 {row[2]}, 消耗 {cost_str}, 累计 {cumulative_str}\n"
+        
+        if len(table_data) > 20:
+            output += f"\n... (共{len(table_data)}级，仅显示关键节点) ...\n"
+        
+        self._show_result(self.t1_result, output)
+
+    # ================================================================
+    #  功能二：根据目标等级 → 算材料需求
+    # ================================================================
+    def _calc_by_target(self):
+        try:
+            set_name = self.t2_set_var.get()
+            start_lv = int(self.t2_start_lv.get() or "0")
+            target_lv = int(self.t2_target_lv.get() or "10")
+        except ValueError:
+            self._show_error(self.t2_result, "等级请输入有效数字！")
+            return
+
+        rows = get_set_data(set_name)
+        if not rows:
+            self._show_error(self.t2_result, "未找到套装数据。")
+            return
+
+        if target_lv <= start_lv:
+            self._show_error(self.t2_result, "目标等级需大于起始等级。")
+            return
+
+        unlock = rows[0]["解锁"]
+        
+        # 构建表格数据
+        table_data = []
+        total_open = {}       # {material_name: total_count}
+        total_refresh_m = {}
+        total_refresh_b = {}
+
+        for lv_idx in range(start_lv, target_lv):
+            r = rows[lv_idx]
+            lv = r["等级"]
+            oname = r["开启名"]
+            oqty = r["开启全位"]
+            rn = r["刷新主名"]
+            rq = r["单级刷新主总"]
+            bn = r["刷新保名"]
+            bq = r["单级刷新保总"]
+
+            total_open[oname] = total_open.get(oname, 0) + oqty
+            total_refresh_m[rn] = total_refresh_m.get(rn, 0) + rq
+            total_refresh_b[bn] = total_refresh_b.get(bn, 0) + bq
+
+            table_data.append([
+                f"Lv.{lv}",
+                oname,
+                oqty,
+                rn,
+                rq,
+                bn,
+                bq,
+                f"全套11部位"
+            ])
+
+        # 添加空行分隔
+        table_data.append(["", "", "", "", "", "", "", ""])
+        
+        # 添加汇总行
+        for mat_name, mat_qty in total_open.items():
+            single_part = int(mat_qty / 11)
+            table_data.append([
+                "总计-开启",
+                mat_name,
+                mat_qty,
+                "",
+                "",
+                "",
+                "",
+                f"单部位: {single_part}"
+            ])
+        
+        for mat_name, mat_qty in total_refresh_m.items():
+            single_part = int(mat_qty / 11)
+            table_data.append([
+                "总计-刷新主",
+                "",
+                "",
+                mat_name,
+                mat_qty,
+                "",
+                "",
+                f"单部位: {single_part}"
+            ])
+        
+        for mat_name, mat_qty in total_refresh_b.items():
+            single_part = int(mat_qty / 11)
+            table_data.append([
+                "总计-刷新保",
+                "",
+                "",
+                "",
+                "",
+                mat_name,
+                mat_qty,
+                f"单部位: {single_part}"
+            ])
+
+        # 显示表格
+        headers = [
+            "等级",
+            "开启材料名", "开启数量",
+            "刷新主材名", "主材数量",
+            "刷新保材名", "保材数量",
+            "说明"
+        ]
+        title = f"{set_name}套注灵材料需求 (Lv.{start_lv}→Lv.{target_lv}) · 解锁等级{unlock}"
+        
+        # 在文本框中显示详细结果
+        output = f"✅ 计算完成\n\n"
+        output += f"{'='*50}\n"
+        output += f"套装: {set_name}套\n"
+        output += f"等级跨度: Lv.{start_lv} → Lv.{target_lv}\n"
+        output += f"解锁等级: {unlock}级\n"
+        output += f"覆盖部位: 11个\n"
+        output += f"{'='*50}\n\n"
+        
+        output += "【总消耗汇总】\n"
+        if total_open:
+            output += "开启材料:\n"
+            for name, qty in total_open.items():
+                output += f"  {name} × {qty}\n"
+        
+        if total_refresh_m:
+            output += "\n刷新主材:\n"
+            for name, qty in total_refresh_m.items():
+                output += f"  {name} × {qty}\n"
+        
+        if total_refresh_b:
+            output += "\n刷新保材:\n"
+            for name, qty in total_refresh_b.items():
+                output += f"  {name} × {qty}\n"
+        
+        output += f"\n{'='*50}\n\n"
+        
+        # 显示每级详情（选择性显示）
+        output += "【逐级材料需求】\n"
+        for i, row in enumerate(table_data[:15]):  # 只显示前15行
+            if row[0] == "总计-开启":
+                output += f"\n>>> {row[0]}: {row[1]} × {row[2]} ({row[7]})\n"
+            elif row[0] == "总计-刷新主":
+                output += f">>> {row[0]}: {row[3]} × {row[4]} ({row[7]})\n"
+            elif row[0] == "总计-刷新保":
+                output += f">>> {row[0]}: {row[5]} × {row[6]} ({row[7]})\n"
+            elif row[0]:  # 等级行
+                output += f"  {row[0]}: {row[1]} × {row[2]}, {row[3]} × {row[4]}, {row[5]} × {row[6]}\n"
+        
+        if len(table_data) > 18:
+            output += f"\n... (仅显示部分，共{len(table_data)}行) ...\n"
+        
+        self._show_result(self.t2_result, output)
+
+    # ----------------------------------------------------------------
+    #  辅助方法（保留旧接口兼容）
+    # ----------------------------------------------------------------

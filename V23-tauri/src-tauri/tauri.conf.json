@@ -1,0 +1,39 @@
+{
+  "productName": "游戏运营工具合集",
+  "version": "2.0.0",
+  "identifier": "com.gameops.toolkit",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "🎮 游戏运营工具合集",
+        "width": 1100,
+        "height": 700,
+        "minWidth": 900,
+        "minHeight": 600,
+        "center": true,
+        "decorations": true,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

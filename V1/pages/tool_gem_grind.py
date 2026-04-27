@@ -547,12 +547,12 @@ class ToolGemGrindPage(ctk.CTkFrame):
             for i, row in enumerate(table_data[:20]):  # 只显示前20级
                 target_lv = row[0]
                 mat_name = row[1]
-                mat_qty = row[2]
-                copper = row[3]
+                mat_qty = row[2]   # 已是格式化字符串
+                copper = row[3]    # 已是格式化字符串
                 rate = row[4]
                 if isinstance(target_lv, int):
                     if target_lv % 5 == 0 or target_lv == lv or i < 3:
-                        output += f"  Lv.{target_lv}: {mat_name} × {self._fmt(mat_qty)}, 铜钱 {self._fmt(copper)}, 成功率 {rate}\n"
+                        output += f"  Lv.{target_lv}: {mat_name} × {mat_qty}, 铜钱 {copper}, 成功率 {rate}\n"
             
             if len(table_data) > 20:
                 output += f"\n... (共{len(table_data)}级，仅显示关键节点) ...\n"
@@ -729,11 +729,22 @@ class ToolGemGrindPage(ctk.CTkFrame):
             output += "【逐级材料需求】\n"
             for i, row in enumerate(table_data[:15]):  # 只显示前15级
                 if "总计" in str(row[0]):
-                    output += f"\n>>> {row[0]}: {row[1]} {row[2] if isinstance(row[2], str) else ''}\n"
+                    # 确定数量在 row[2]，期望数量在 row[3]
+                    qty_str = str(row[2]) if row[2] != "" else ""
+                    exp_str = str(row[3]) if row[3] != "" else ""
+                    if qty_str and exp_str:
+                        output += f"\n>>> {row[0]}: {row[1]} 确定{qty_str}, 期望{exp_str}\n"
+                    elif qty_str:
+                        output += f"\n>>> {row[0]}: {row[1]} {qty_str}\n"
+                    elif exp_str:
+                        output += f"\n>>> {row[0]}: {row[1]} 期望{exp_str}\n"
+                    else:
+                        output += f"\n>>> {row[0]}: {row[1]}\n"
                 elif isinstance(row[0], int):
                     lv = row[0]
                     if lv % 5 == 0 or lv == target_lv or i < 5:
-                        output += f"  Lv.{lv}: {row[1]}, 确定{row[2]}颗, 期望{row[3]:.1f}颗\n"
+                        # row[3] 已是格式化字符串，直接输出
+                        output += f"  Lv.{lv}: {row[1]}, 确定{row[2]}颗, 期望{row[3]}颗\n"
             
             if len(table_data) > 18:
                 output += f"\n... (仅显示部分，共{len(table_data)}行) ...\n"

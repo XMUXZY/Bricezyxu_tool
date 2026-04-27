@@ -865,13 +865,13 @@ class ToolZhuLingPage(ctk.CTkFrame):
         output += "【逐级材料需求】\n"
         for i, row in enumerate(table_data[:15]):  # 只显示前15行
             if row[0] == "总计-开启":
-                output += f"\n>>> {row[0]}: {row[6]} × {row[7]}\n"
+                output += f"\n>>> {row[0]}: {row[1]} × {row[2]} ({row[7]})\n"
             elif row[0] == "总计-刷新主":
-                output += f">>> {row[0]}: {row[6]} × {row[7]} ({row[8]})\n"
+                output += f">>> {row[0]}: {row[3]} × {row[4]} ({row[7]})\n"
             elif row[0] == "总计-刷新保":
-                output += f">>> {row[0]}: {row[6]} × {row[7]} ({row[8]})\n"
+                output += f">>> {row[0]}: {row[5]} × {row[6]} ({row[7]})\n"
             elif row[0]:  # 等级行
-                output += f"  Lv.{row[0]}: {row[1]} × {row[2]}, {row[3]} × {row[4]}, {row[5]} × {row[6]}\n"
+                output += f"  {row[0]}: {row[1]} × {row[2]}, {row[3]} × {row[4]}, {row[5]} × {row[6]}\n"
         
         if len(table_data) > 18:
             output += f"\n... (仅显示部分，共{len(table_data)}行) ...\n"

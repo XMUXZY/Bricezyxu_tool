@@ -1,0 +1,11 @@
+F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\deps\phf-c714b39d09861a27.d: C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\lib.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\map.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\ordered_map.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\ordered_set.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\set.rs
+
+F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\deps\libphf-c714b39d09861a27.rlib: C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\lib.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\map.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\ordered_map.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\ordered_set.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\set.rs
+
+F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\deps\libphf-c714b39d09861a27.rmeta: C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\lib.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\map.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\ordered_map.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\ordered_set.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\set.rs
+
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\lib.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\map.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\ordered_map.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\ordered_set.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.11.3\src\set.rs:

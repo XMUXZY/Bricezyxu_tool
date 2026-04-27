@@ -1,0 +1,14 @@
+F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\deps\softbuffer-9a90a15f72aa8e8a.d: C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\lib.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_dispatch.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_interface.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\mod.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\win32.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\error.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\util.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\../README.md
+
+F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\deps\libsoftbuffer-9a90a15f72aa8e8a.rmeta: C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\lib.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_dispatch.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_interface.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\mod.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\win32.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\error.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\util.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\../README.md
+
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\lib.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_dispatch.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_interface.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\mod.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\win32.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\error.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\util.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\../README.md:
+
+# env-dep:CARGO_PKG_VERSION=0.4.8

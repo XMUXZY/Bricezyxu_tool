@@ -1,0 +1,108 @@
+{
+    "guardian_config": {
+        "star_cost": {"0": 20, "1": 20, "2": 40, "3": 80, "4": 160},
+        "star_cum": {"0": 0, "1": 20, "2": 40, "3": 80, "4": 160, "5": 320},
+        "quality_colors": {
+            "蓝(2)": "#4a9eff",
+            "蓝绿(3)": "#00bfa5",
+            "紫(4)": "#ab47bc",
+            "金(5)": "#ffa000"
+        },
+        "remnant_per_draw": 10
+    },
+    "groups": [
+        {
+            "name": "四值功曹",
+            "ticket": "功曹请神符",
+            "pity_limit": 6000,
+            "pity_trigger": 60,
+            "count_pity": 115,
+            "count_pity_target": "值年功曹",
+            "guardians": [
+                {"name": "值时功曹", "quality": "蓝(2)", "price": 2,  "weight": 30},
+                {"name": "值日功曹", "quality": "蓝绿(3)", "price": 4,  "weight": 15},
+                {"name": "值月功曹", "quality": "蓝绿(3)", "price": 4,  "weight": 15},
+                {"name": "值年功曹", "quality": "紫(4)", "price": 60, "weight": 1}
+            ],
+            "pity_guardians": ["值年功曹"]
+        },
+        {
+            "name": "日直六星",
+            "ticket": "日直六星请神符",
+            "pity_limit": 6000,
+            "pity_trigger": 60,
+            "count_pity": null,
+            "count_pity_target": null,
+            "guardians": [
+                {"name": "显道神", "quality": "蓝(2)", "price": 4,  "weight": 60},
+                {"name": "开路神", "quality": "蓝(2)", "price": 4,  "weight": 60},
+                {"name": "增福神", "quality": "蓝绿(3)", "price": 8,  "weight": 30},
+                {"name": "损福神", "quality": "蓝绿(3)", "price": 8,  "weight": 30},
+                {"name": "日游神", "quality": "紫(4)", "price": 80, "weight": 3},
+                {"name": "夜游神", "quality": "紫(4)", "price": 80, "weight": 3}
+            ],
+            "pity_guardians": ["日游神", "夜游神"]
+        },
+        {
+            "name": "九歌地神",
+            "ticket": "九歌地神请神符",
+            "pity_limit": 6000,
+            "pity_trigger": 60,
+            "count_pity": null,
+            "count_pity_target": null,
+            "guardians": [
+                {"name": "河伯",   "quality": "蓝(2)", "price": 8,   "weight": 120},
+                {"name": "山鬼",   "quality": "蓝绿(3)", "price": 16,  "weight": 60},
+                {"name": "湘夫人", "quality": "紫(4)", "price": 240, "weight": 1},
+                {"name": "湘君",   "quality": "紫(4)", "price": 240, "weight": 1}
+            ],
+            "pity_guardians": ["湘夫人", "湘君"]
+        },
+        {
+            "name": "云海天神",
+            "ticket": "云海天神请神符",
+            "pity_limit": 7000,
+            "pity_trigger": 70,
+            "count_pity": null,
+            "count_pity_target": null,
+            "guardians": [
+                {"name": "地安神", "quality": "蓝(2)", "price": 32,  "weight": 1200},
+                {"name": "天时神", "quality": "蓝绿(3)", "price": 64,  "weight": 600},
+                {"name": "阴光神", "quality": "紫(4)", "price": 999, "weight": 1},
+                {"name": "阳炁神", "quality": "紫(4)", "price": 999, "weight": 1}
+            ],
+            "pity_guardians": ["阴光神", "阳炁神"]
+        },
+        {
+            "name": "五德真君",
+            "ticket": "五德真君请神符",
+            "pity_limit": 8000,
+            "pity_trigger": 80,
+            "count_pity": null,
+            "count_pity_target": null,
+            "guardians": [
+                {"name": "地侯星君", "quality": "蓝(2)", "price": 64,   "weight": 4800},
+                {"name": "重华星君", "quality": "蓝绿(3)", "price": 128,  "weight": 2400},
+                {"name": "伺辰星君", "quality": "蓝绿(3)", "price": 128,  "weight": 1200},
+                {"name": "荧惑星君", "quality": "紫(4)", "price": 2000, "weight": 90},
+                {"name": "太白星君", "quality": "金(5)", "price": 4000, "weight": 8}
+            ],
+            "pity_guardians": ["荧惑星君"]
+        },
+        {
+            "name": "天元九歌",
+            "ticket": "天元九歌请神符",
+            "pity_limit": 10000,
+            "pity_trigger": 100,
+            "count_pity": null,
+            "count_pity_target": null,
+            "guardians": [
+                {"name": "大司命", "quality": "蓝(2)", "price": 640,   "weight": 6000},
+                {"name": "云中君", "quality": "蓝绿(3)", "price": 1280,  "weight": 3000},
+                {"name": "东君",   "quality": "紫(4)", "price": 20000, "weight": 45},
+                {"name": "少司命", "quality": "紫(4)", "price": 20000, "weight": 45}
+            ],
+            "pity_guardians": ["东君", "少司命"]
+        }
+    ]
+}

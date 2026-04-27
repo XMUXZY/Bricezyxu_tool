@@ -1,0 +1,47 @@
+{
+  "_comment": "遁甲（强运）养成数据配置",
+  "grades": {
+    "黄阶": {
+      "max_level": 36,
+      "material": "古迹灵石",
+      "material_id": 59011243,
+      "base_ability": 55,
+      "ability_increment": 110
+    },
+    "玄阶": {
+      "max_level": 49,
+      "material": "古迹灵石·玄",
+      "material_id": 59011248,
+      "base_ability": 40,
+      "ability_increment_formula": "60 + (level - 1) * 30"
+    },
+    "地阶": {
+      "max_level": 64,
+      "material": "古迹灵石·地",
+      "material_id": 59011249,
+      "base_ability": 28,
+      "ability_increment_formula": "14 + (level - 1) * 36"
+    },
+    "天阶": {
+      "max_level": 100,
+      "material": "古迹灵石·天",
+      "material_id": 59011250,
+      "base_ability": 1590,
+      "ability_increment": 9222,
+      "cost_rules": [
+        {"level_range": [1, 81], "cost": 1},
+        {"level_range": [82, 83], "cost": 2},
+        {"level_range": [84, 85], "cost": 3},
+        {"level_range": [86, 87], "cost": 4},
+        {"level_range": [88, 89], "cost": 6},
+        {"level_range": [90, 91], "cost": 8},
+        {"level_range": [92, 93], "cost": 10},
+        {"level_range": [94, 95], "cost": 12},
+        {"level_range": [96, 97], "cost": 14},
+        {"level_range": [98, 99], "cost": 16},
+        {"level_range": [100, 100], "cost": 18}
+      ]
+    }
+  },
+  "grade_order": ["黄阶", "玄阶", "地阶", "天阶"]
+}

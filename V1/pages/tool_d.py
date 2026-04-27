@@ -1,191 +1,179 @@
 """
 星录养成计算器模块
-QQ华夏手游经典区 · 星录养成系统计算工具
+QQ华夏手游经典区 · 星录养成系统（太微/紫微/天市/启明）
 
 支持两种计算模式：
-  模式一：根据已有材料计算可达到的星录等级
-  模式二：根据目标等级计算所需材料（升重石 + 灵运石期望值）
+  模式一：根据已有材料计算可达到的等级（重数+星级）
+  模式二：根据目标等级计算所需材料
 
-数据来源：星录养成数据_AI版.xlsx
+仅计算锤炼材料和保级材料的期望消耗，不含升重石。
+数据来源：星录养成数据_AI版v2.xlsx（经典区配置表 release6.3）
 """
 
 import customtkinter as ctk
 
 
 # ============================================================
-# 一、星录基础信息
+# 一、星录基础配置
 # ============================================================
-STAR_RECORDS = {
-    1: {"name": "太微", "max_weight": 20, "upgrade_stone": "太微升重石", "visible_level": 0,
-        "pre_record": None, "pre_weight": 0},
-    2: {"name": "紫微", "max_weight": 20, "upgrade_stone": "紫微升重石", "visible_level": 108,
-        "pre_record": "太微", "pre_weight": 7},
-    3: {"name": "天市", "max_weight": 22, "upgrade_stone": "天市升重石", "visible_level": 220,
-        "pre_record": "紫微", "pre_weight": 7},
-    4: {"name": "启明", "max_weight": 20, "upgrade_stone": "启明升重石", "visible_level": 260,
-        "pre_record": "天市", "pre_weight": 5},
+
+XINLU_CONFIG = {
+    "太微": {
+        "max_chong": 20,
+        "low_mat": "南明离火", "mid_mat": "九幽玄火", "high_mat": "红莲业火",
+        "guard": "灵运石", "upgrade": "升重石",
+        "unlock_lv": 0, "pre_req": "无",
+    },
+    "紫微": {
+        "max_chong": 20,
+        "low_mat": "破军寒玉", "mid_mat": "贪狼煞玉", "high_mat": "天府瑞玉",
+        "guard": "仙运石",
+        "unlock_lv": 108, "pre_req": "太微达7重",
+    },
+    "天市": {
+        "max_chong": 22,
+        "low_mat": "通财幽泉", "mid_mat": "朔雪寒泉", "high_mat": "星河神泉",
+        "guard": "吉运石", "upgrade": "天市升重圭",
+        "unlock_lv": 220, "pre_req": "紫微达7重",
+    },
+    "启明": {
+        "max_chong": 20,
+        "low_mat": "百炼赤金", "mid_mat": "千锻精金", "high_mat": "万融庚金",
+        "guard": "福运石",
+        "unlock_lv": 260, "pre_req": "天市达5重",
+    },
 }
 
-STAR_COUNT = 8  # 每部星录8个星官
+XINLU_NAMES = list(XINLU_CONFIG.keys())
+
 
 # ============================================================
-# 二、锤炼消耗表（每重每星的期望材料消耗）
-# 字段: 重数, 星级, 材料名称, 单次消耗量, 初始概率(%), 期望材料消耗
-# 数据来自"锤炼消耗表"，4部星录规则完全相同
+# 二、锤炼消耗数据（以太微为基准，4部星录规则完全相同）
+# 每条: (重数, 星级, 单次主材料消耗, 期望锤炼次数, 期望主材料消耗, 保级消耗/次, 期望保级消耗)
 # ============================================================
-REFINING_DATA = [
-    # 重数1 (南明离火)
-    {"weight": 1, "star": 1, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 1, "star": 2, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 1, "star": 3, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 1, "star": 4, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 1, "star": 5, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    {"weight": 1, "star": 6, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    # 重数2 (南明离火)
-    {"weight": 2, "star": 1, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 2, "star": 2, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 2, "star": 3, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 2, "star": 4, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 2, "star": 5, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    {"weight": 2, "star": 6, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    # 重数3 (南明离火)
-    {"weight": 3, "star": 1, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 3, "star": 2, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 3, "star": 3, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 3, "star": 4, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 3, "star": 5, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    {"weight": 3, "star": 6, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    # 重数4 (南明离火)
-    {"weight": 4, "star": 1, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 4, "star": 2, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 4, "star": 3, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 4, "star": 4, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 4, "star": 5, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    {"weight": 4, "star": 6, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    # 重数5 (南明离火)
-    {"weight": 5, "star": 1, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 5, "star": 2, "material": "南明离火", "consume": 1, "prob": 85, "expected": 1.2},
-    {"weight": 5, "star": 3, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 5, "star": 4, "material": "南明离火", "consume": 2, "prob": 75, "expected": 2.7},
-    {"weight": 5, "star": 5, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    {"weight": 5, "star": 6, "material": "南明离火", "consume": 3, "prob": 65, "expected": 4.6},
-    # 重数6 (南明离火 - 概率突变)
-    {"weight": 6, "star": 1, "material": "南明离火", "consume": 10, "prob": 10, "expected": 10.0},
-    {"weight": 6, "star": 2, "material": "南明离火", "consume": 10, "prob": 10, "expected": 10.0},
-    {"weight": 6, "star": 3, "material": "南明离火", "consume": 25, "prob": 10, "expected": 25.0},
-    {"weight": 6, "star": 4, "material": "南明离火", "consume": 25, "prob": 10, "expected": 25.0},
-    {"weight": 6, "star": 5, "material": "南明离火", "consume": 50, "prob": 10, "expected": 50.0},
-    {"weight": 6, "star": 6, "material": "南明离火", "consume": 50, "prob": 10, "expected": 50.0},
-    # 重数7 (南明离火)
-    {"weight": 7, "star": 1, "material": "南明离火", "consume": 30, "prob": 10, "expected": 30.0},
-    {"weight": 7, "star": 2, "material": "南明离火", "consume": 30, "prob": 10, "expected": 30.0},
-    {"weight": 7, "star": 3, "material": "南明离火", "consume": 50, "prob": 10, "expected": 50.0},
-    {"weight": 7, "star": 4, "material": "南明离火", "consume": 50, "prob": 10, "expected": 50.0},
-    {"weight": 7, "star": 5, "material": "南明离火", "consume": 83.3, "prob": 6, "expected": 83.3},
-    {"weight": 7, "star": 6, "material": "南明离火", "consume": 83.3, "prob": 6, "expected": 83.3},
-    # 重数8 (南明离火)
-    {"weight": 8, "star": 1, "material": "南明离火", "consume": 50, "prob": 10, "expected": 50.0},
-    {"weight": 8, "star": 2, "material": "南明离火", "consume": 50, "prob": 10, "expected": 50.0},
-    {"weight": 8, "star": 3, "material": "南明离火", "consume": 75, "prob": 8, "expected": 75.0},
-    {"weight": 8, "star": 4, "material": "南明离火", "consume": 75, "prob": 8, "expected": 75.0},
-    {"weight": 8, "star": 5, "material": "南明离火", "consume": 116.7, "prob": 6, "expected": 116.7},
-    {"weight": 8, "star": 6, "material": "南明离火", "consume": 116.7, "prob": 6, "expected": 116.7},
-    # 重数9 (南明离火)
-    {"weight": 9, "star": 1, "material": "南明离火", "consume": 87.5, "prob": 8, "expected": 87.5},
-    {"weight": 9, "star": 2, "material": "南明离火", "consume": 87.5, "prob": 8, "expected": 87.5},
-    {"weight": 9, "star": 3, "material": "南明离火", "consume": 133.3, "prob": 6, "expected": 133.3},
-    {"weight": 9, "star": 4, "material": "南明离火", "consume": 133.3, "prob": 6, "expected": 133.3},
-    {"weight": 9, "star": 5, "material": "南明离火", "consume": 225, "prob": 4.4, "expected": 225.0},
-    {"weight": 9, "star": 6, "material": "南明离火", "consume": 225, "prob": 4.4, "expected": 225.0},
-    # 重数10 (南明离火)
-    {"weight": 10, "star": 1, "material": "南明离火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 10, "star": 2, "material": "南明离火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 10, "star": 3, "material": "南明离火", "consume": 150, "prob": 6.7, "expected": 150.0},
-    {"weight": 10, "star": 4, "material": "南明离火", "consume": 150, "prob": 6.7, "expected": 150.0},
-    {"weight": 10, "star": 5, "material": "南明离火", "consume": 250, "prob": 4, "expected": 250.0},
-    {"weight": 10, "star": 6, "material": "南明离火", "consume": 250, "prob": 4, "expected": 250.0},
-    # 重数11 (九幽玄火)
-    {"weight": 11, "star": 1, "material": "九幽玄火", "consume": 66.7, "prob": 15, "expected": 66.7},
-    {"weight": 11, "star": 2, "material": "九幽玄火", "consume": 66.7, "prob": 15, "expected": 66.7},
-    {"weight": 11, "star": 3, "material": "九幽玄火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 11, "star": 4, "material": "九幽玄火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 11, "star": 5, "material": "九幽玄火", "consume": 133.3, "prob": 7.5, "expected": 133.3},
-    {"weight": 11, "star": 6, "material": "九幽玄火", "consume": 133.3, "prob": 7.5, "expected": 133.3},
-    # 重数12 (九幽玄火)
-    {"weight": 12, "star": 1, "material": "九幽玄火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 12, "star": 2, "material": "九幽玄火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 12, "star": 3, "material": "九幽玄火", "consume": 133.3, "prob": 7.5, "expected": 133.3},
-    {"weight": 12, "star": 4, "material": "九幽玄火", "consume": 133.3, "prob": 7.5, "expected": 133.3},
-    {"weight": 12, "star": 5, "material": "九幽玄火", "consume": 166.7, "prob": 6, "expected": 166.7},
-    {"weight": 12, "star": 6, "material": "九幽玄火", "consume": 166.7, "prob": 6, "expected": 166.7},
-    # 重数13 (九幽玄火)
-    {"weight": 13, "star": 1, "material": "九幽玄火", "consume": 133.3, "prob": 7.5, "expected": 133.3},
-    {"weight": 13, "star": 2, "material": "九幽玄火", "consume": 133.3, "prob": 7.5, "expected": 133.3},
-    {"weight": 13, "star": 3, "material": "九幽玄火", "consume": 166.7, "prob": 6, "expected": 166.7},
-    {"weight": 13, "star": 4, "material": "九幽玄火", "consume": 166.7, "prob": 6, "expected": 166.7},
-    {"weight": 13, "star": 5, "material": "九幽玄火", "consume": 200, "prob": 5, "expected": 200.0},
-    {"weight": 13, "star": 6, "material": "九幽玄火", "consume": 200, "prob": 5, "expected": 200.0},
-    # 重数14 (九幽玄火)
-    {"weight": 14, "star": 1, "material": "九幽玄火", "consume": 250, "prob": 4, "expected": 250.0},
-    {"weight": 14, "star": 2, "material": "九幽玄火", "consume": 250, "prob": 4, "expected": 250.0},
-    {"weight": 14, "star": 3, "material": "九幽玄火", "consume": 300, "prob": 3.3, "expected": 300.0},
-    {"weight": 14, "star": 4, "material": "九幽玄火", "consume": 300, "prob": 3.3, "expected": 300.0},
-    {"weight": 14, "star": 5, "material": "九幽玄火", "consume": 350, "prob": 2.9, "expected": 350.0},
-    {"weight": 14, "star": 6, "material": "九幽玄火", "consume": 350, "prob": 2.9, "expected": 350.0},
-    # 重数15 (九幽玄火)
-    {"weight": 15, "star": 1, "material": "九幽玄火", "consume": 300, "prob": 3.3, "expected": 300.0},
-    {"weight": 15, "star": 2, "material": "九幽玄火", "consume": 300, "prob": 3.3, "expected": 300.0},
-    {"weight": 15, "star": 3, "material": "九幽玄火", "consume": 350, "prob": 2.9, "expected": 350.0},
-    {"weight": 15, "star": 4, "material": "九幽玄火", "consume": 350, "prob": 2.9, "expected": 350.0},
-    {"weight": 15, "star": 5, "material": "九幽玄火", "consume": 400, "prob": 2.5, "expected": 400.0},
-    {"weight": 15, "star": 6, "material": "九幽玄火", "consume": 400, "prob": 2.5, "expected": 400.0},
-    # 重数16 (红莲业火)
-    {"weight": 16, "star": 1, "material": "红莲业火", "consume": 50, "prob": 20, "expected": 50.0},
-    {"weight": 16, "star": 2, "material": "红莲业火", "consume": 50, "prob": 20, "expected": 50.0},
-    {"weight": 16, "star": 3, "material": "红莲业火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 16, "star": 4, "material": "红莲业火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 16, "star": 5, "material": "红莲业火", "consume": 150, "prob": 6.7, "expected": 150.0},
-    {"weight": 16, "star": 6, "material": "红莲业火", "consume": 150, "prob": 6.7, "expected": 150.0},
-    # 重数17 (红莲业火)
-    {"weight": 17, "star": 1, "material": "红莲业火", "consume": 50, "prob": 20, "expected": 50.0},
-    {"weight": 17, "star": 2, "material": "红莲业火", "consume": 50, "prob": 20, "expected": 50.0},
-    {"weight": 17, "star": 3, "material": "红莲业火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 17, "star": 4, "material": "红莲业火", "consume": 100, "prob": 10, "expected": 100.0},
-    {"weight": 17, "star": 5, "material": "红莲业火", "consume": 200, "prob": 5, "expected": 200.0},
-    {"weight": 17, "star": 6, "material": "红莲业火", "consume": 200, "prob": 5, "expected": 200.0},
-    # 重数18 (红莲业火)
-    {"weight": 18, "star": 1, "material": "红莲业火", "consume": 50, "prob": 20, "expected": 50.0},
-    {"weight": 18, "star": 2, "material": "红莲业火", "consume": 50, "prob": 20, "expected": 50.0},
-    {"weight": 18, "star": 3, "material": "红莲业火", "consume": 150, "prob": 6.7, "expected": 150.0},
-    {"weight": 18, "star": 4, "material": "红莲业火", "consume": 150, "prob": 6.7, "expected": 150.0},
-    {"weight": 18, "star": 5, "material": "红莲业火", "consume": 200, "prob": 5, "expected": 200.0},
-    {"weight": 18, "star": 6, "material": "红莲业火", "consume": 200, "prob": 5, "expected": 200.0},
-    # 重数19 (红莲业火)
-    {"weight": 19, "star": 1, "material": "红莲业火", "consume": 200, "prob": 5, "expected": 200.0},
-    {"weight": 19, "star": 2, "material": "红莲业火", "consume": 200, "prob": 5, "expected": 200.0},
-    {"weight": 19, "star": 3, "material": "红莲业火", "consume": 300, "prob": 3.3, "expected": 300.0},
-    {"weight": 19, "star": 4, "material": "红莲业火", "consume": 300, "prob": 3.3, "expected": 300.0},
-    {"weight": 19, "star": 5, "material": "红莲业火", "consume": 400, "prob": 2.5, "expected": 400.0},
-    {"weight": 19, "star": 6, "material": "红莲业火", "consume": 400, "prob": 2.5, "expected": 400.0},
-    # 重数20 (红莲业火)
-    {"weight": 20, "star": 1, "material": "红莲业火", "consume": 200, "prob": 5, "expected": 200.0},
-    {"weight": 20, "star": 2, "material": "红莲业火", "consume": 200, "prob": 5, "expected": 200.0},
-    {"weight": 20, "star": 3, "material": "红莲业火", "consume": 300, "prob": 3.3, "expected": 300.0},
-    {"weight": 20, "star": 4, "material": "红莲业火", "consume": 300, "prob": 3.3, "expected": 300.0},
-    {"weight": 20, "star": 5, "material": "红莲业火", "consume": 500, "prob": 2, "expected": 500.0},
-    {"weight": 20, "star": 6, "material": "红莲业火", "consume": 500, "prob": 2, "expected": 500.0},
+
+_FORGE_RAW = [
+    # 重数, 星级, 单次消耗, 期望次数, 期望主材料, 保级/次, 期望保级
+    (1,1,1,1.18,1.2,1,1.2),(1,2,1,1.18,1.2,1,1.2),(1,3,2,1.33,2.7,1,1.3),
+    (1,4,2,1.33,2.7,1,1.3),(1,5,3,1.54,4.6,1,1.5),(1,6,3,1.54,4.6,1,1.5),
+    (2,1,1,1.18,1.2,2,2.4),(2,2,1,1.18,1.2,2,2.4),(2,3,2,1.33,2.7,2,2.7),
+    (2,4,2,1.33,2.7,2,2.7),(2,5,3,1.54,4.6,2,3.1),(2,6,3,1.54,4.6,2,3.1),
+    (3,1,1,1.18,1.2,3,3.5),(3,2,1,1.18,1.2,3,3.5),(3,3,2,1.33,2.7,3,4),
+    (3,4,2,1.33,2.7,3,4),(3,5,3,1.54,4.6,3,4.6),(3,6,3,1.54,4.6,3,4.6),
+    (4,1,1,1.18,1.2,4,4.7),(4,2,1,1.18,1.2,4,4.7),(4,3,2,1.33,2.7,4,5.3),
+    (4,4,2,1.33,2.7,4,5.3),(4,5,3,1.54,4.6,4,6.2),(4,6,3,1.54,4.6,4,6.2),
+    (5,1,1,1.18,1.2,5,5.9),(5,2,1,1.18,1.2,5,5.9),(5,3,2,1.33,2.7,5,6.7),
+    (5,4,2,1.33,2.7,5,6.7),(5,5,3,1.54,4.6,5,7.7),(5,6,3,1.54,4.6,5,7.7),
+    (6,1,5,2,10,3,6),(6,2,5,2,10,3,6),(6,3,10,2.5,25,3,7.5),
+    (6,4,10,2.5,25,3,7.5),(6,5,15,3.33,50,3,10),(6,6,15,3.33,50,3,10),
+    (7,1,15,2,30,4,8),(7,2,15,2,30,4,8),(7,3,20,2.5,50,4,10),
+    (7,4,20,2.5,50,4,10),(7,5,25,3.33,83.2,4,13.3),(7,6,25,3.33,83.2,4,13.3),
+    (8,1,25,2,50,5,10),(8,2,25,2,50,5,10),(8,3,30,2.5,75,5,12.5),
+    (8,4,30,2.5,75,5,12.5),(8,5,35,3.33,116.5,5,16.6),(8,6,35,3.33,116.5,5,16.6),
+    (9,1,35,2.5,87.5,6,15),(9,2,35,2.5,87.5,6,15),(9,3,40,3.33,133.2,6,20),
+    (9,4,40,3.33,133.2,6,20),(9,5,45,5,225,6,30),(9,6,45,5,225,6,30),
+    (10,1,40,2.5,100,7,17.5),(10,2,40,2.5,100,7,17.5),(10,3,45,3.33,149.8,7,23.3),
+    (10,4,45,3.33,149.8,7,23.3),(10,5,50,5,250,7,35),(10,6,50,5,250,7,35),
+    # 中阶 11-15重
+    (11,1,10,6.67,66.7,4,26.7),(11,2,10,6.67,66.7,4,26.7),(11,3,15,6.67,100,4,26.7),
+    (11,4,15,6.67,100,4,26.7),(11,5,20,6.67,133.4,4,26.7),(11,6,20,6.67,133.4,4,26.7),
+    (12,1,15,6.67,100,5,33.4),(12,2,15,6.67,100,5,33.4),(12,3,20,6.67,133.4,5,33.4),
+    (12,4,20,6.67,133.4,5,33.4),(12,5,25,6.67,166.8,5,33.4),(12,6,25,6.67,166.8,5,33.4),
+    (13,1,20,6.67,133.4,6,40),(13,2,20,6.67,133.4,6,40),(13,3,25,6.67,166.8,6,40),
+    (13,4,25,6.67,166.8,6,40),(13,5,30,6.67,200.1,6,40),(13,6,30,6.67,200.1,6,40),
+    (14,1,25,10,250,7,70),(14,2,25,10,250,7,70),(14,3,30,10,300,7,70),
+    (14,4,30,10,300,7,70),(14,5,35,10,350,7,70),(14,6,35,10,350,7,70),
+    (15,1,30,10,300,8,80),(15,2,30,10,300,8,80),(15,3,35,10,350,8,80),
+    (15,4,35,10,350,8,80),(15,5,40,10,400,8,80),(15,6,40,10,400,8,80),
+    # 高阶 16-20重
+    (16,1,5,10,50,8,80),(16,2,5,10,50,8,80),(16,3,10,10,100,8,80),
+    (16,4,10,10,100,8,80),(16,5,15,10,150,8,80),(16,6,15,10,150,8,80),
+    (17,1,5,10,50,9,90),(17,2,5,10,50,9,90),(17,3,10,10,100,9,90),
+    (17,4,10,10,100,9,90),(17,5,20,10,200,9,90),(17,6,20,10,200,9,90),
+    (18,1,5,10,50,10,100),(18,2,5,10,50,10,100),(18,3,15,10,150,10,100),
+    (18,4,15,10,150,10,100),(18,5,20,10,200,10,100),(18,6,20,10,200,10,100),
+    (19,1,10,20,200,11,220),(19,2,10,20,200,11,220),(19,3,15,20,300,11,220),
+    (19,4,15,20,300,11,220),(19,5,20,20,400,11,220),(19,6,20,20,400,11,220),
+    (20,1,10,20,200,12,240),(20,2,10,20,200,12,240),(20,3,15,20,300,12,240),
+    (20,4,15,20,300,12,240),(20,5,25,20,500,12,240),(20,6,25,20,500,12,240),
+    # 天市 21-22重 (高阶材料，概率5%)
+    (21,1,15,20,300,20,400),(21,2,15,20,300,20,400),(21,3,20,20,400,25,500),
+    (21,4,20,20,400,25,500),(21,5,25,20,500,30,600),(21,6,25,20,500,30,600),
+    (22,1,20,20,400,25,500),(22,2,20,20,400,25,500),(22,3,25,20,500,30,600),
+    (22,4,25,20,500,30,600),(22,5,30,20,600,40,800),(22,6,30,20,600,40,800),
 ]
 
-# ============================================================
-# 三、升重石消耗表（单官每重消耗量）
-# 升重是确定性的，固定数量
-# ============================================================
-UPGRADE_STONE_COST = {
-    1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 2, 8: 2, 9: 2, 10: 2,
-    11: 3, 12: 3, 13: 4, 14: 4, 15: 5, 16: 6, 17: 8, 18: 8, 19: 10, 20: 12,
-    21: 15, 22: 20,  # 天市特有到22重
+# 构建查找字典: (重数, 星级) -> {exp_mat: 期望主材料, exp_guard: 期望保级}
+FORGE_DATA = {}
+for row in _FORGE_RAW:
+    chong, star, _, _, exp_mat, guard_per, exp_guard = row
+    FORGE_DATA[(chong, star)] = {
+        "exp_mat": exp_mat,
+        "exp_guard": exp_guard,
+    }
+del _FORGE_RAW
+
+# 启明17-20重保级消耗特殊值
+QIMING_GUARD_OVERRIDE = {
+    (17, 1): 12, (17, 2): 12, (17, 3): 12, (17, 4): 12, (17, 5): 12, (17, 6): 12,
+    (18, 1): 21, (18, 2): 21, (18, 3): 21, (18, 4): 21, (18, 5): 21, (18, 6): 21,
+    (19, 1): 34, (19, 2): 34, (19, 3): 34, (19, 4): 34, (19, 5): 34, (19, 6): 34,
+    (20, 1): 49, (20, 2): 49, (20, 3): 49, (20, 4): 49, (20, 5): 49, (20, 6): 49,
 }
 
+# 天市21-22重保级消耗特殊值（已在 FORGE_DATA 中体现）
+# 不需要额外 override，因为数据已包含
+
+
+
+
+
+
+
+def _get_mat_tier(chong):
+    """根据重数返回材料阶次: 'low'(1-10), 'mid'(11-15), 'high'(16+)"""
+    if chong <= 10:
+        return "low"
+    elif chong <= 15:
+        return "mid"
+    else:
+        return "high"
+
+
+def _get_mat_name(xinlu_name, tier):
+    """获取某星录某阶次的实际材料名"""
+    cfg = XINLU_CONFIG[xinlu_name]
+    return cfg[f"{tier}_mat"]
+
+
+def _get_guard_exp(xinlu_name, chong, star):
+    """获取某星录某(重数,星级)的期望保级消耗"""
+    base = FORGE_DATA.get((chong, star), {}).get("exp_guard", 0)
+    # 启明17-20重保级特殊处理
+    if xinlu_name == "启明" and (chong, star) in QIMING_GUARD_OVERRIDE:
+        # 期望保级 = 期望次数 × 保级/次
+        # 从 FORGE_DATA 取期望次数 (exp_mat / 单次消耗)
+        # 简化：直接用 锤炼表中的 期望次数 × 特殊保级/次
+        fd = FORGE_DATA.get((chong, star))
+        if fd:
+            # 反推期望次数: 用基准保级期望 / 基准保级每次
+            base_guard_per = {17: 9, 18: 10, 19: 11, 20: 12}.get(chong, 0)
+            if base_guard_per > 0:
+                exp_times = base / base_guard_per
+                special_per = QIMING_GUARD_OVERRIDE[(chong, star)]
+                return round(exp_times * special_per, 1)
+    # 天市21-22重保级已在数据中体现
+    return base
+
+
+def _get_forge_exp_mat(chong, star):
+    """获取某(重数,星级)的期望主材料消耗"""
+    return FORGE_DATA.get((chong, star), {}).get("exp_mat", 0)
+
+
+# ============================================================
+# 四、工具页面
+# ============================================================
 
 class ToolDPage(ctk.CTkFrame):
     """星录养成计算器界面"""
@@ -195,23 +183,26 @@ class ToolDPage(ctk.CTkFrame):
         self.colors = colors
         self._build_ui()
 
+    # ------------------------------------------------------------------
+    # UI 构建
+    # ------------------------------------------------------------------
+
     def _build_ui(self):
-        """构建界面"""
         scroll = ctk.CTkScrollableFrame(self, fg_color="transparent", corner_radius=0)
         scroll.pack(fill="both", expand=True, padx=30, pady=20)
         scroll.grid_columnconfigure(0, weight=1)
 
-        # ---- 标题 ----
+        # 标题
         ctk.CTkLabel(scroll, text="⭐ 星录养成计算器",
-                    font=ctk.CTkFont(size=22, weight="bold"),
-                    text_color="#ffffff", anchor="w"
-                    ).grid(row=0, column=0, sticky="w", pady=(0, 5))
+                     font=ctk.CTkFont(size=22, weight="bold"),
+                     text_color="#ffffff", anchor="w"
+                     ).grid(row=0, column=0, sticky="w", pady=(0, 5))
 
-        ctk.CTkLabel(scroll, text="QQ华夏手游经典区 · 4部星录 · 8星官/部 · 概率期望值计算",
-                    font=ctk.CTkFont(size=12), text_color=self.colors["text_dim"], anchor="w"
-                    ).grid(row=1, column=0, sticky="w", pady=(0, 15))
+        ctk.CTkLabel(scroll, text="QQ华夏手游 · 4部星录 × 8星官 · 概率期望计算",
+                     font=ctk.CTkFont(size=12), text_color=self.colors["text_dim"], anchor="w"
+                     ).grid(row=1, column=0, sticky="w", pady=(0, 15))
 
-        # ---- 标签页切换 ----
+        # 标签页切换
         tab_frame = ctk.CTkFrame(scroll, fg_color="transparent")
         tab_frame.grid(row=2, column=0, sticky="ew", pady=(0, 12))
 
@@ -226,17 +217,16 @@ class ToolDPage(ctk.CTkFrame):
         self.tab_seg.pack(fill="x")
         self.tab_seg.set("📊 根据材料算可达等级")
 
-        # ===== Tab 1: 根据材料计算 =====
+        # Tab 1
         self.tab1 = ctk.CTkFrame(scroll, fg_color="#1a1a2e", corner_radius=12)
         self.tab1.grid(row=3, column=0, sticky="ew", pady=(0, 15))
         self._build_tab1()
 
-        # ===== Tab 2: 根据目标计算 =====
+        # Tab 2
         self.tab2 = ctk.CTkFrame(scroll, fg_color="#1a1a2e", corner_radius=12)
-        # 不 grid，由 tab 切换控制
         self._build_tab2()
 
-        # ---- 说明区域 ----
+        # 说明区域
         info_card = ctk.CTkFrame(scroll, fg_color="#1a1a2e", corner_radius=12)
         info_card.grid(row=4, column=0, sticky="ew", pady=(0, 10))
 
@@ -247,415 +237,577 @@ class ToolDPage(ctk.CTkFrame):
                      text_color="#ffffff", anchor="w").pack(fill="x", pady=(0, 8))
 
         rules = [
-            "· 每部星录含 8 个星官，各星官独立养成",
-            "· 锤炼(星级)：概率事件，使用灵运石，结果为期望值",
-            "· 升重(重数)：确定性事件，消耗固定升重石",
-            "· 材料阶段：南明离火(1~10重)→ 九幽玄火(11~15重)→ 红莲业火(16~20重)",
-            "· 太微上限20重 | 紫微上限20重 | 天市上限22重 | 启明上限20重",
+            "· 4部星录：太微→紫微→天市→启明，按解锁顺序依次开放",
+            "· 每部星录下设8个星官，各星官独立养成",
+            "· 每重有6个星级（1→6星），全部打通后可升重",
+            "· 锤炼为概率制：结果为期望消耗（≈实际平均）",
+            "· 本计算器关注锤炼材料和保级材料，不计算升重石",
+            "· 天市最高22重，21-22重概率仅5%、消耗极高",
+            "· 启明17-20重保级消耗急增（17:12→20:49/次）",
+            "· 建议在期望值基础上备20-30%冗余",
         ]
         for r in rules:
             ctk.CTkLabel(info_inner, text=r, font=ctk.CTkFont(size=12),
                          text_color=self.colors["text_dim"], anchor="w").pack(fill="x", pady=1)
 
-    # ================================================================
-    # Tab 1 UI 构建
-    # ================================================================
+    # ------------------------------------------------------------------
+    # Tab 1: 根据材料算可达等级
+    # ------------------------------------------------------------------
 
     def _build_tab1(self):
         inner = ctk.CTkFrame(self.tab1, fg_color="transparent")
         inner.pack(fill="x", padx=20, pady=18)
         inner.grid_columnconfigure((0, 1), weight=1)
 
-        # 星录类型选择
+        row = 0
+
+        # 星录选择
         ctk.CTkLabel(inner, text="选择星录", font=ctk.CTkFont(size=14, weight="bold"),
                      text_color="#ffffff", anchor="w"
-                     ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
+                     ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        row += 1
 
-        self.t1_star_type = ctk.CTkOptionMenu(
-            inner, values=["① 太微星录", "② 紫微星录", "③ 天市星录", "④ 启明星录"],
+        self.t1_xinlu = ctk.CTkOptionMenu(
+            inner, values=XINLU_NAMES,
             height=32, corner_radius=6,
             fg_color="#0f3460", button_color="#0f3460", button_hover_color="#16213e",
+            command=self._on_xinlu_change_t1,
         )
-        self.t1_star_type.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 12))
-        self.t1_star_type.set("① 太微星录")
+        self.t1_xinlu.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        self.t1_xinlu.set("太微")
+        row += 1
+
+        # 材料信息提示
+        self.t1_mat_info = ctk.CTkLabel(inner, text="",
+                                        font=ctk.CTkFont(size=11),
+                                        text_color="#e94560", anchor="w")
+        self.t1_mat_info.grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 8))
+        row += 1
 
         # 当前状态
         ctk.CTkLabel(inner, text="当前状态", font=ctk.CTkFont(size=14, weight="bold"),
                      text_color="#ffffff", anchor="w"
-                     ).grid(row=2, column=0, columnspan=2, sticky="w", pady=(6, 6))
+                     ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(6, 6))
+        row += 1
 
-        ctk.CTkLabel(inner, text="当前重数 (1~20/22)", font=ctk.CTkFont(size=12),
-                     text_color=self.colors["text_dim"]).grid(row=3, column=0, sticky="w", padx=(0, 8))
-        self.t1_cur_weight = ctk.CTkEntry(inner, placeholder_text="1", height=32, corner_radius=6)
-        self.t1_cur_weight.grid(row=4, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
-        self.t1_cur_weight.insert(0, "1")
-
-        ctk.CTkLabel(inner, text="当前星级 (0~6)", font=ctk.CTkFont(size=12),
-                     text_color=self.colors["text_dim"]).grid(row=3, column=1, sticky="w", padx=(8, 0))
+        ctk.CTkLabel(inner, text="当前重数", font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"]).grid(row=row, column=0, sticky="w", padx=(0, 8))
+        ctk.CTkLabel(inner, text="当前星级 (0=未开始)", font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"]).grid(row=row, column=1, sticky="w", padx=(8, 0))
+        row += 1
+        self.t1_cur_chong = ctk.CTkEntry(inner, placeholder_text="1", height=32, corner_radius=6)
+        self.t1_cur_chong.grid(row=row, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
+        self.t1_cur_chong.insert(0, "1")
         self.t1_cur_star = ctk.CTkEntry(inner, placeholder_text="0", height=32, corner_radius=6)
-        self.t1_cur_star.grid(row=4, column=1, sticky="ew", padx=(8, 0), pady=(0, 8))
+        self.t1_cur_star.grid(row=row, column=1, sticky="ew", padx=(8, 0), pady=(0, 8))
         self.t1_cur_star.insert(0, "0")
+        row += 1
 
         # 拥有材料
-        ctk.CTkLabel(inner, text="拥有材料", font=ctk.CTkFont(size=14, weight="bold"),
+        ctk.CTkLabel(inner, text="拥有材料（留空=无限）", font=ctk.CTkFont(size=14, weight="bold"),
                      text_color="#ffffff", anchor="w"
-                     ).grid(row=5, column=0, columnspan=2, sticky="w", pady=(10, 6))
+                     ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(8, 6))
+        row += 1
 
-        for i, mat in enumerate(["南明离火", "九幽玄火", "红莲业火"]):
-            ctk.CTkLabel(inner, text=f"{mat}:", font=ctk.CTkFont(size=12),
-                         text_color=self.colors["text_dim"]).grid(
-                row=6 + i, column=0, sticky="w", pady=(3, 2))
-            entry = ctk.CTkEntry(inner, placeholder_text="留空=无限", height=32, corner_radius=6)
-            entry.grid(row=6 + i, column=1, sticky="ew", padx=(8, 0), pady=(3, 2))
+        # 低阶材料
+        self.t1_low_label = ctk.CTkLabel(inner, text="低阶材料(南明离火):", font=ctk.CTkFont(size=12),
+                                         text_color=self.colors["text_dim"])
+        self.t1_low_label.grid(row=row, column=0, sticky="w", padx=(0, 8), pady=(3, 2))
+        self.t1_mid_label = ctk.CTkLabel(inner, text="中阶材料(九幽玄火):", font=ctk.CTkFont(size=12),
+                                         text_color=self.colors["text_dim"])
+        self.t1_mid_label.grid(row=row, column=1, sticky="w", padx=(8, 0), pady=(3, 2))
+        row += 1
+        self.t1_low_entry = ctk.CTkEntry(inner, placeholder_text="留空=无限", height=32, corner_radius=6)
+        self.t1_low_entry.grid(row=row, column=0, sticky="ew", padx=(0, 8), pady=(0, 4))
+        self.t1_mid_entry = ctk.CTkEntry(inner, placeholder_text="留空=无限", height=32, corner_radius=6)
+        self.t1_mid_entry.grid(row=row, column=1, sticky="ew", padx=(8, 0), pady=(0, 4))
+        row += 1
 
-        self.t1_mats = {}
-        self.t1_mats["南明"] = inner.winfo_children()[-3] if len(inner.winfo_children()) >= 3 else None
-        self.t1_mats["九幽"] = inner.winfo_children()[-2] if len(inner.winfo_children()) >= 2 else None
-        self.t1_mats["红莲"] = inner.winfo_children()[-1] if len(inner.winfo_children()) >= 1 else None
+        self.t1_high_label = ctk.CTkLabel(inner, text="高阶材料(红莲业火):", font=ctk.CTkFont(size=12),
+                                          text_color=self.colors["text_dim"])
+        self.t1_high_label.grid(row=row, column=0, sticky="w", padx=(0, 8), pady=(3, 2))
+        self.t1_guard_label = ctk.CTkLabel(inner, text="保级道具(灵运石):", font=ctk.CTkFont(size=12),
+                                           text_color=self.colors["text_dim"])
+        self.t1_guard_label.grid(row=row, column=1, sticky="w", padx=(8, 0), pady=(3, 2))
+        row += 1
+        self.t1_high_entry = ctk.CTkEntry(inner, placeholder_text="留空=无限", height=32, corner_radius=6)
+        self.t1_high_entry.grid(row=row, column=0, sticky="ew", padx=(0, 8), pady=(0, 4))
+        self.t1_guard_entry = ctk.CTkEntry(inner, placeholder_text="留空=无限", height=32, corner_radius=6)
+        self.t1_guard_entry.grid(row=row, column=1, sticky="ew", padx=(8, 0), pady=(0, 4))
+        row += 1
 
-        # 用变量保存引用
-        self.t1_mat_nanming = None
-        self.t1_mat_jiuyou = None
-        self.t_mat_honglian = None
+        # 星官数量
+        ctk.CTkLabel(inner, text="计算星官数量", font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"]).grid(row=row, column=0, sticky="w", pady=(3, 2))
+        row += 1
+        self.t1_officer_count = ctk.CTkOptionMenu(
+            inner, values=["1个星官", "8个星官(全部)"],
+            height=32, corner_radius=6,
+            fg_color="#0f3460", button_color="#0f3460", button_hover_color="#16213e",
+        )
+        self.t1_officer_count.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        self.t1_officer_count.set("1个星官")
+        row += 1
 
-        # 重新获取引用
-        children = inner.winfo_children()
-        idx = 0
-        for child in children:
-            if isinstance(child, ctk.CTkEntry):
-                if self.t1_mat_nanming is None:
-                    self.t1_mat_nanming = child
-                elif self.t1_mat_jiuyou is None:
-                    self.t1_mat_jiuyou = child
-                else:
-                    self.t_mat_honglian = child
-
-        # 升重石
-        ctk.CTkLabel(inner, text="升重石:", font=ctk.CTkFont(size=12),
-                     text_color=self.colors["text_dim"]).grid(
-            row=9, column=0, sticky="w", pady=(3, 2))
-        self.t1_upgrade_stone = ctk.CTkEntry(inner, placeholder_text="留空=无限", height=32, corner_radius=6)
-        self.t1_upgrade_stone.grid(row=9, column=1, sticky="ew", padx=(8, 0), pady=(3, 2))
-
-        # 按钮 + 结果
+        # 计算按钮
         btn_row = ctk.CTkFrame(inner, fg_color="transparent")
-        btn_row.grid(row=10, column=0, columnspan=2, sticky="ew", pady=(10, 8))
-
+        btn_row.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(12, 8))
+        row += 1
         ctk.CTkButton(btn_row, text="▶ 计算可达到的等级",
-                      font=ctk.CTkFont(size=14, weight="bold"), height=40, corner_radius=8,
-                      fg_color="#0f3460", hover_color="#16213e",
+                      font=ctk.CTkFont(size=14, weight="bold"), height=38,
+                      fg_color="#e94560", hover_color="#c73650",
                       command=self._calc_by_materials).pack(fill="x")
 
-        self.t1_result = ctk.CTkTextbox(inner, height=220, corner_radius=8,
-                                        fg_color="#0f0f1a", font=ctk.CTkFont(size=13))
-        self.t1_result.grid(row=11, column=0, columnspan=2, sticky="ew")
-        self.t1_result.insert("1.0", "等待计算...\n")
+        # 结果区
+        self.t1_result = ctk.CTkTextbox(inner, height=300, corner_radius=8,
+                                        fg_color="#0f0f1a", font=ctk.CTkFont(size=13),
+                                        wrap="word")
+        self.t1_result.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(6, 0))
+        self.t1_result.insert("1.0", "请输入参数后点击计算...\n")
         self.t1_result.configure(state="disabled")
 
-    # ================================================================
-    # Tab 2 UI 构建
-    # ================================================================
+        # 初始更新材料名
+        self._update_mat_labels_t1()
+
+    # ------------------------------------------------------------------
+    # Tab 2: 根据目标算所需材料
+    # ------------------------------------------------------------------
 
     def _build_tab2(self):
         inner = ctk.CTkFrame(self.tab2, fg_color="transparent")
         inner.pack(fill="x", padx=20, pady=18)
         inner.grid_columnconfigure((0, 1), weight=1)
 
-        # 星录类型
+        row = 0
+
+        # 星录选择
         ctk.CTkLabel(inner, text="选择星录", font=ctk.CTkFont(size=14, weight="bold"),
                      text_color="#ffffff", anchor="w"
-                     ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
-
-        self.t2_star_type = ctk.CTkOptionMenu(
-            inner, values=["① 太微星录", "② 紫微星录", "③ 天市星录", "④ 启明星录"],
-            height=32, corner_radius=6,
+                     ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        row += 1
+        self.t2_xinlu = ctk.CTkOptionMenu(
+            inner, values=XINLU_NAMES, height=32, corner_radius=6,
             fg_color="#0f3460", button_color="#0f3460", button_hover_color="#16213e",
+            command=self._on_xinlu_change_t2,
         )
-        self.t2_star_type.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 12))
-        self.t2_star_type.set("① 太微星录")
+        self.t2_xinlu.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        self.t2_xinlu.set("太微")
+        row += 1
+
+        # 材料信息提示
+        self.t2_mat_info = ctk.CTkLabel(inner, text="",
+                                        font=ctk.CTkFont(size=11),
+                                        text_color="#e94560", anchor="w")
+        self.t2_mat_info.grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 8))
+        row += 1
 
         # 起始状态
         ctk.CTkLabel(inner, text="起始状态", font=ctk.CTkFont(size=14, weight="bold"),
                      text_color="#ffffff", anchor="w"
-                     ).grid(row=2, column=0, columnspan=2, sticky="w", pady=(6, 6))
+                     ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(6, 6))
+        row += 1
 
         ctk.CTkLabel(inner, text="起始重数", font=ctk.CTkFont(size=12),
-                     text_color=self.colors["text_dim"]).grid(row=3, column=0, sticky="w", padx=(0, 8))
-        self.t2_start_w = ctk.CTkEntry(inner, placeholder_text="1", height=32, corner_radius=6)
-        self.t2_start_w.grid(row=4, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
-        self.t2_start_w.insert(0, "1")
-
-        ctk.CTkLabel(inner, text="起始星级", font=ctk.CTkFont(size=12),
-                     text_color=self.colors["text_dim"]).grid(row=3, column=1, sticky="w", padx=(8, 0))
-        self.t2_start_s = ctk.CTkEntry(inner, placeholder_text="0", height=32, corner_radius=6)
-        self.t2_start_s.grid(row=4, column=1, sticky="ew", padx=(8, 0), pady=(0, 8))
-        self.t2_start_s.insert(0, "0")
+                     text_color=self.colors["text_dim"]).grid(row=row, column=0, sticky="w", padx=(0, 8))
+        ctk.CTkLabel(inner, text="起始星级 (0=未开始)", font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"]).grid(row=row, column=1, sticky="w", padx=(8, 0))
+        row += 1
+        self.t2_start_chong = ctk.CTkEntry(inner, placeholder_text="1", height=32, corner_radius=6)
+        self.t2_start_chong.grid(row=row, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
+        self.t2_start_chong.insert(0, "1")
+        self.t2_start_star = ctk.CTkEntry(inner, placeholder_text="0", height=32, corner_radius=6)
+        self.t2_start_star.grid(row=row, column=1, sticky="ew", padx=(8, 0), pady=(0, 8))
+        self.t2_start_star.insert(0, "0")
+        row += 1
 
         # 目标状态
         ctk.CTkLabel(inner, text="目标状态", font=ctk.CTkFont(size=14, weight="bold"),
                      text_color="#ffffff", anchor="w"
-                     ).grid(row=5, column=0, columnspan=2, sticky="w", pady=(8, 6))
+                     ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(6, 6))
+        row += 1
 
         ctk.CTkLabel(inner, text="目标重数", font=ctk.CTkFont(size=12),
-                     text_color=self.colors["text_dim"]).grid(row=6, column=0, sticky="w", padx=(0, 8))
-        self.t2_target_w = ctk.CTkEntry(inner, placeholder_text="20", height=32, corner_radius=6)
-        self.t2_target_w.grid(row=7, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
-        self.t2_target_w.insert(0, "20")
+                     text_color=self.colors["text_dim"]).grid(row=row, column=0, sticky="w", padx=(0, 8))
+        ctk.CTkLabel(inner, text="目标星级 (0=刚升重/6=满)", font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"]).grid(row=row, column=1, sticky="w", padx=(8, 0))
+        row += 1
+        self.t2_target_chong = ctk.CTkEntry(inner, placeholder_text="20", height=32, corner_radius=6)
+        self.t2_target_chong.grid(row=row, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
+        self.t2_target_chong.insert(0, "20")
+        self.t2_target_star = ctk.CTkEntry(inner, placeholder_text="6", height=32, corner_radius=6)
+        self.t2_target_star.grid(row=row, column=1, sticky="ew", padx=(8, 0), pady=(0, 8))
+        self.t2_target_star.insert(0, "6")
+        row += 1
 
-        ctk.CTkLabel(inner, text="目标星级", font=ctk.CTkFont(size=12),
-                     text_color=self.colors["text_dim"]).grid(row=6, column=1, sticky="w", padx=(8, 0))
-        self.t2_target_s = ctk.CTkEntry(inner, placeholder_text="6", height=32, corner_radius=6)
-        self.t2_target_s.grid(row=7, column=1, sticky="ew", padx=(8, 0), pady=(0, 8))
-        self.t2_target_s.insert(0, "6")
+        # 星官数量
+        ctk.CTkLabel(inner, text="计算星官数量", font=ctk.CTkFont(size=12),
+                     text_color=self.colors["text_dim"]).grid(row=row, column=0, sticky="w", pady=(3, 2))
+        row += 1
+        self.t2_officer_count = ctk.CTkOptionMenu(
+            inner, values=["1个星官", "8个星官(全部)"],
+            height=32, corner_radius=6,
+            fg_color="#0f3460", button_color="#0f3460", button_hover_color="#16213e",
+        )
+        self.t2_officer_count.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        self.t2_officer_count.set("1个星官")
+        row += 1
 
-        # 按钮 + 结果
+        # 计算按钮
         btn_row = ctk.CTkFrame(inner, fg_color="transparent")
-        btn_row.grid(row=8, column=0, columnspan=2, sticky="ew", pady=(10, 8))
-
+        btn_row.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(12, 8))
+        row += 1
         ctk.CTkButton(btn_row, text="▶ 计算所需材料",
-                      font=ctk.CTkFont(size=14, weight="bold"), height=40, corner_radius=8,
-                      fg_color="#2e7d32", hover_color="#1b5e20",
+                      font=ctk.CTkFont(size=14, weight="bold"), height=38,
+                      fg_color="#e94560", hover_color="#c73650",
                       command=self._calc_for_target).pack(fill="x")
 
-        self.t2_result = ctk.CTkTextbox(inner, height=280, corner_radius=8,
-                                        fg_color="#0f0f1a", font=ctk.CTkFont(size=13))
-        self.t2_result.grid(row=9, column=0, columnspan=2, sticky="ew")
-        self.t2_result.insert("1.0", "等待计算...\n")
+        # 结果区
+        self.t2_result = ctk.CTkTextbox(inner, height=350, corner_radius=8,
+                                        fg_color="#0f0f1a", font=ctk.CTkFont(size=13),
+                                        wrap="word")
+        self.t2_result.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(6, 0))
+        self.t2_result.insert("1.0", "请输入参数后点击计算...\n")
         self.t2_result.configure(state="disabled")
 
-    # ================================================================
-    # 标签页切换
-    # ================================================================
+        # 初始更新材料名
+        self._update_mat_info_t2()
 
-    def _on_tab_change(self, value):
-        if value == "📊 根据材料算可达等级":
+    # ------------------------------------------------------------------
+    # 交互回调
+    # ------------------------------------------------------------------
+
+    def _on_tab_change(self, val):
+        if "根据材料" in str(val):
             self.tab1.grid(row=3, column=0, sticky="ew", pady=(0, 15))
-            self.tab2.grid_forget()
+            try:
+                self.tab2.grid_forget()
+            except Exception:
+                pass
         else:
             self.tab2.grid(row=3, column=0, sticky="ew", pady=(0, 15))
-            self.tab1.grid_forget()
+            try:
+                self.tab1.grid_forget()
+            except Exception:
+                pass
 
-    # ================================================================
+    def _on_xinlu_change_t1(self, val):
+        self._update_mat_labels_t1()
+
+    def _on_xinlu_change_t2(self, val):
+        self._update_mat_info_t2()
+
+    def _update_mat_labels_t1(self):
+        xinlu = self.t1_xinlu.get()
+        cfg = XINLU_CONFIG[xinlu]
+        self.t1_low_label.configure(text=f"低阶材料({cfg['low_mat']}):")
+        self.t1_mid_label.configure(text=f"中阶材料({cfg['mid_mat']}):")
+        self.t1_high_label.configure(text=f"高阶材料({cfg['high_mat']}):")
+        self.t1_guard_label.configure(text=f"保级道具({cfg['guard']}):")
+        max_c = cfg["max_chong"]
+        self.t1_mat_info.configure(
+            text=f"最高{max_c}重 | 解锁等级:{cfg['unlock_lv']} | 前置:{cfg['pre_req']}"
+        )
+
+    def _update_mat_info_t2(self):
+        xinlu = self.t2_xinlu.get()
+        cfg = XINLU_CONFIG[xinlu]
+        max_c = cfg["max_chong"]
+        self.t2_mat_info.configure(
+            text=f"最高{max_c}重 | 低阶:{cfg['low_mat']} | 中阶:{cfg['mid_mat']} | 高阶:{cfg['high_mat']}"
+        )
+
+    # ------------------------------------------------------------------
     # 辅助方法
-    # ================================================================
+    # ------------------------------------------------------------------
 
-    def _get_record_id(self, option_str: str) -> int:
-        _MAP = {"① 太微星录": 1, "② 紫微星录": 2, "③ 天市星录": 3, "④ 启明星录": 4}
-        return _MAP.get(option_str, 1)
+    def _parse_int(self, val, default):
+        try:
+            return int((val or "").strip() or str(default))
+        except (ValueError, AttributeError):
+            return default
 
-    def _show_result(self, tb: ctk.CTkTextbox, text: str):
+    def _parse_float_or_inf(self, val):
+        v = (val or "").strip()
+        if not v:
+            return float("inf")
+        try:
+            return float(v)
+        except (ValueError, AttributeError):
+            return float("inf")
+
+    def _fmt(self, v):
+        if isinstance(v, float) and v == float("inf"):
+            return "∞"
+        if isinstance(v, float):
+            if v >= 10000:
+                return f"{v:,.0f}"
+            return f"{v:,.1f}"
+        return f"{v:,}"
+
+    def _show_result(self, tb, text):
         tb.configure(state="normal")
         tb.delete("1.0", "end")
         tb.insert("1.0", text)
         tb.configure(state="disabled")
 
-    def _show_error(self, tb: ctk.CTkTextbox, msg: str):
+    def _show_error(self, tb, msg):
         self._show_result(tb, f"⚠ {msg}\n")
 
-    def _fmt(self, num: float) -> str:
-        """格式化数字"""
-        if num >= 10000: return f"{num:,.0f}"
-        if num >= 100: return f"{num:,.1f}"
-        if num >= 1: return f"{num:,.2f}"
-        return f"{num:.3f}"
+    def _get_officer_mult(self, option_val):
+        return 8 if "8" in option_val else 1
 
-    def _parse_int(self, val: str, default: int) -> int:
-        try: return int((val or "").strip() or str(default))
-        except: return default
-
-    def _parse_float_or_inf(self, val: str) -> float:
-        v = val.strip()
-        if not v: return float("inf")
-        try: return float(v)
-        except: return float("inf")
-
-    def _get_refining_entry(self, weight: int) -> list:
-        """获取某重数的所有星级数据"""
-        return [r for r in REFINING_DATA if r["weight"] == weight]
-
-    def _get_max_weight(self, record_id: int) -> int:
-        return STAR_RECORDS[record_id]["max_weight"]
-
-    # ================================================================
+    # ------------------------------------------------------------------
     # 模式一：根据材料计算可达等级
-    # ================================================================
+    # ------------------------------------------------------------------
 
     def _calc_by_materials(self):
         try:
-            rid = self._get_record_id(self.t1_star_type.get())
-            cur_w = self._parse_int(self.t1_cur_weight.get(), 1)
-            cur_s = self._parse_int(self.t1_cur_star.get(), 0)
+            xinlu = self.t1_xinlu.get()
+            cfg = XINLU_CONFIG[xinlu]
+            max_chong = cfg["max_chong"]
+            mult = self._get_officer_mult(self.t1_officer_count.get())
 
-            max_w = self._get_max_weight(rid)
-            nanming = self._parse_float_or_inf(self.t1_mat_nanming.get())
-            jiuyou = self._parse_float_or_inf(self.t1_mat_jiuyou.get())
-            honglian = self._parse_float_or_inf(self.t_mat_honglian.get())
-            upgrade = self._parse_float_or_inf(self.t1_upgrade_stone.get())
+            cur_chong = self._parse_int(self.t1_cur_chong.get(), 1)
+            cur_star = self._parse_int(self.t1_cur_star.get(), 0)
 
-            if nanming == float("inf") and jiuyou == float("inf") and honglian == float("inf") and upgrade == float("inf"):
-                self._show_error(self.t1_result, "请至少输入一种材料的数量！")
+            if cur_chong < 1 or cur_chong > max_chong:
+                self._show_error(self.t1_result, f"当前重数需在 1 ~ {max_chong} 之间")
                 return
-            if cur_w < 1 or cur_w > max_w:
-                self._show_error(self.t1_result, f"重数需在 1 ~ {max_w} 之间")
-                return
-            if cur_s < 0 or cur_s > 6:
-                self._show_error(self.t1_result, "星级需在 0 ~ 6 之间")
+            if cur_star < 0 or cur_star > 6:
+                self._show_error(self.t1_result, "当前星级需在 0 ~ 6 之间")
                 return
 
-            # 开始模拟
-            w, s = cur_w, cur_s
-            total_nanming = 0.0
-            total_jiuyou = 0.0
-            total_honglian = 0.0
-            total_upgrade = 0.0
-            steps = 0
+            # 解析材料
+            low_mat = self._parse_float_or_inf(self.t1_low_entry.get())
+            mid_mat = self._parse_float_or_inf(self.t1_mid_entry.get())
+            high_mat = self._parse_float_or_inf(self.t1_high_entry.get())
+            guard = self._parse_float_or_inf(self.t1_guard_entry.get())
 
-            try:
-                while w <= max_w:
-                    # 先打完当前重数的剩余星级 (从cur_s+1 到 6)
-                    start_star = s + 1 if s < 6 else 99
-                    if start_star <= 6:
-                        entries = [r for r in REFINING_DATA if r["weight"] == w]
-                        for star in range(start_star, 7):
-                            match = next((e for e in entries if e["star"] == star), None)
-                            if not match:
-                                break
-                            cost = match["expected"]
-                            mat = match["material"]
+            # 按倍数除以星官数（材料总量分给N个星官）
+            if mult > 1:
+                if low_mat != float("inf"):
+                    low_mat /= mult
+                if mid_mat != float("inf"):
+                    mid_mat /= mult
+                if high_mat != float("inf"):
+                    high_mat /= mult
+                if guard != float("inf"):
+                    guard /= mult
 
-                            can_afford = False
-                            if mat == "南明离火" and nanming >= cost:
-                                nanming -= cost; total_nanming += cost; can_afford = True
-                            elif mat == "九幽玄火" and jiuyou >= cost:
-                                jiuyou -= cost; total_jiuyou += cost; can_afford = True
-                            elif mat == "红莲业火" and honglian >= cost:
-                                honglian -= cost; total_honglian += cost; can_afford = True
+            # 消耗追踪
+            used = {"low": 0, "mid": 0, "high": 0, "guard": 0}
+            chong = cur_chong
+            star = cur_star
+            stopped = False
 
-                            if not can_afford:
-                                s = star - 1
-                                raise StopIteration
-                            s = star
-                            steps += 1
+            while chong <= max_chong and not stopped:
+                # 天市21-22重仅天市可用
+                if chong > 20 and xinlu != "天市":
+                    break
 
-                    # 尝试升重
-                    if w >= max_w:
+                # 锤炼当前重数的星级
+                start_star = star + 1 if star < 6 else 7  # 从下一星开始
+                for s in range(start_star, 7):  # 1-6星
+                    forge_key = (chong, s)
+                    if forge_key not in FORGE_DATA:
+                        stopped = True
                         break
-                    u_cost = UPGRADE_STONE_COST.get(w + 1, 30)
-                    if upgrade < u_cost:
-                        raise StopIteration
-                    upgrade -= u_cost
-                    total_upgrade += u_cost
-                    w += 1
-                    s = 0
 
-            except StopIteration:
-                pass
+                    exp_mat = _get_forge_exp_mat(chong, s)
+                    exp_guard_val = _get_guard_exp(xinlu, chong, s)
+                    tier = _get_mat_tier(chong)
 
+                    # 检查主材料
+                    mat_pool = {"low": low_mat, "mid": mid_mat, "high": high_mat}
+                    if mat_pool[tier] != float("inf") and mat_pool[tier] < exp_mat:
+                        stopped = True
+                        break
+                    # 检查保级
+                    if guard != float("inf") and guard < exp_guard_val:
+                        stopped = True
+                        break
+
+                    # 消耗
+                    if mat_pool[tier] != float("inf"):
+                        if tier == "low":
+                            low_mat -= exp_mat
+                        elif tier == "mid":
+                            mid_mat -= exp_mat
+                        else:
+                            high_mat -= exp_mat
+                    if guard != float("inf"):
+                        guard -= exp_guard_val
+
+                    used[tier] += exp_mat
+                    used["guard"] += exp_guard_val
+                    star = s
+
+                if stopped:
+                    break
+
+                # 全6星完成，自动升重（不消耗升重石）
+                if star == 6 and chong < max_chong:
+                    chong += 1
+                    star = 0
+                elif star == 6 and chong == max_chong:
+                    break  # 已满级
+                else:
+                    break  # 不应到达
+
+            # 输出结果
             lines = []
-            sr = STAR_RECORDS[rid]
-            lines.append(f"━━━ 养成模拟结果 ━━━\n")
-            lines.append(f"星录：{sr['name']}星录 (最大{sr['max_weight']}重)")
-            lines.append(f"\n▸ 可达等级：{w}重{s}星")
-            lines.append(f"  从 {cur_w}重{cur_s}星 出发，共推进 {steps} 个星级步骤\n")
+            lines.append(f"━━━ 星录养成模拟结果 ━━━\n")
+            lines.append(f"星录：{xinlu} | 最高{max_chong}重")
+            lines.append(f"计算方式：{'8个星官(材料平分)' if mult > 1 else '单个星官'}\n")
+            lines.append(f"▸ 可达等级：{chong}重{star}星")
+            lines.append(f"  从 {cur_chong}重{self._parse_int(self.t1_cur_star.get(), 0)}星 出发\n")
 
-            lines.append("━ 累计材料消耗 ━")
-            if total_nanming > 0: lines.append(f"  南明离火: {self._fmt(total_nanming)}")
-            if total_jiuyou > 0: lines.append(f"  九幽玄火: {self._fmt(total_jiuyou)}")
-            if total_honglian > 0: lines.append(f"  红莲业火: {self._fmt(total_honglian)}")
-            lines.append(f"  {sr['upgrade_stone']}: {self._fmt(total_upgrade)}")
-            lines.append(f"\n(以上为单星官认为值 × 8星官)")
+            lines.append("━ 单官期望消耗 ━")
+            if used["low"] > 0:
+                lines.append(f"  {cfg['low_mat']}(低阶): {self._fmt(used['low'])}")
+            if used["mid"] > 0:
+                lines.append(f"  {cfg['mid_mat']}(中阶): {self._fmt(used['mid'])}")
+            if used["high"] > 0:
+                lines.append(f"  {cfg['high_mat']}(高阶): {self._fmt(used['high'])}")
+            if used["guard"] > 0:
+                lines.append(f"  {cfg['guard']}(保级): {self._fmt(used['guard'])}")
+
+            if mult > 1:
+                lines.append(f"\n━ 8官总消耗 ━")
+                if used["low"] > 0:
+                    lines.append(f"  {cfg['low_mat']}: {self._fmt(used['low'] * 8)}")
+                if used["mid"] > 0:
+                    lines.append(f"  {cfg['mid_mat']}: {self._fmt(used['mid'] * 8)}")
+                if used["high"] > 0:
+                    lines.append(f"  {cfg['high_mat']}: {self._fmt(used['high'] * 8)}")
+                if used["guard"] > 0:
+                    lines.append(f"  {cfg['guard']}: {self._fmt(used['guard'] * 8)}")
 
             self._show_result(self.t1_result, "\n".join(lines) + "\n")
-
-            # 剩余提示
-            remain_lines = []
-            if nanming != float("inf") and nanming > 0:
-                remain_lines.append(f"  剩余南明: {self._fmt(nanming)}")
-            if jiuyou != float("inf") and jiuyou > 0:
-                remain_lines.append(f"  剩余九幽: {self._fmt(jiuyou)}")
-            if honglian != float("inf") and honglian > 0:
-                remain_lines.append(f"  剩余红莲: {self._fmt(honglian)}")
-            if upgrade != float("inf") and upgrade > 0:
-                remain_lines.append(f"  剩余升重石: {self._fmt(upgrade)}")
-            if remain_lines:
-                old = self.t1_result.get("1.0", "end").strip()
-                self._show_result(self.t1_result, old + "\n" + "\n".join(remain_lines) + "\n")
 
         except Exception as ex:
             self._show_error(self.t1_result, f"计算出错: {ex}")
 
-    # ================================================================
+    # ------------------------------------------------------------------
     # 模式二：根据目标计算所需材料
-    # ================================================================
+    # ------------------------------------------------------------------
 
     def _calc_for_target(self):
         try:
-            rid = self._get_record_id(self.t2_star_type.get())
-            start_w = self._parse_int(self.t2_start_w.get(), 1)
-            start_s = self._parse_int(self.t2_start_s.get(), 0)
-            target_w = self._parse_int(self.t2_target_w.get(), 20)
-            target_s = self._parse_int(self.t2_target_s.get(), 6)
+            xinlu = self.t2_xinlu.get()
+            cfg = XINLU_CONFIG[xinlu]
+            max_chong = cfg["max_chong"]
+            mult = self._get_officer_mult(self.t2_officer_count.get())
 
-            max_w = self._get_max_weight(rid)
+            start_chong = self._parse_int(self.t2_start_chong.get(), 1)
+            start_star = self._parse_int(self.t2_start_star.get(), 0)
+            target_chong = self._parse_int(self.t2_target_chong.get(), max_chong)
+            target_star = self._parse_int(self.t2_target_star.get(), 6)
 
-            if start_w < 1 or start_w > max_w:
-                self._show_error(self.t2_result, f"起始重数需在 1 ~ {max_w}")
+            # 校验
+            if start_chong < 1 or start_chong > max_chong:
+                self._show_error(self.t2_result, f"起始重数需在 1 ~ {max_chong}")
                 return
-            if target_w < 1 or target_w > max_w:
-                self._show_error(self.t2_result, f"目标重数需在 1 ~ {max_w}")
+            if target_chong < 1 or target_chong > max_chong:
+                self._show_error(self.t2_result, f"目标重数需在 1 ~ {max_chong}")
                 return
-            if start_s < 0 or start_s > 6:
-                self._show_error(self.t2_result, "起始星级 0~6"); return
-            if target_s < 0 or target_s > 6:
-                self._show_error(self.t2_result, "目标星级 0~6"); return
-            if (target_w < start_w) or (target_w == start_w and target_s <= start_s):
-                self._show_error(self.t2_result, "目标必须大于起始"); return
+            if start_star < 0 or start_star > 6:
+                self._show_error(self.t2_result, "起始星级需在 0 ~ 6")
+                return
+            if target_star < 0 or target_star > 6:
+                self._show_error(self.t2_result, "目标星级需在 0 ~ 6")
+                return
+            if target_chong < start_chong or (target_chong == start_chong and target_star <= start_star):
+                self._show_error(self.t2_result, "目标必须大于起始状态")
+                return
+            if target_chong > 20 and xinlu != "天市":
+                self._show_error(self.t2_result, f"{xinlu}最高{max_chong}重")
+                return
 
-            # 累加材料
-            tot_n = 0.0  # 南明
-            tot_j = 0.0  # 九幽
-            tot_h = 0.0  # 红莲
-            tot_u = 0.0  # 升重石
-
-            cw, cs = start_w, start_s
+            # 累加消耗
+            used = {"low": 0, "mid": 0, "high": 0, "guard": 0}
+            chong = start_chong
+            star = start_star
 
             while True:
-                # 打完当前重剩余星级
-                for star in range(cs + 1, 7):
-                    match = next((r for r in REFINING_DATA if r["weight"] == cw and r["star"] == star), None)
-                    if match:
-                        exp = match["expected"]
-                        mat = match["material"]
-                        if mat == "南明离火": tot_n += exp
-                        elif mat == "九幽玄火": tot_j += exp
-                        elif mat == "红莲业火": tot_h += exp
-                    cs = star
-
-                if cw == target_w and cs >= target_s:
+                # 判断是否已达目标
+                if chong > target_chong:
                     break
-                if cw >= target_w:
+                if chong == target_chong and star >= target_star:
                     break
 
-                # 升重
-                cw += 1
-                cs = 0
-                tot_u += UPGRADE_STONE_COST.get(cw, 30)
+                # 锤炼
+                next_star = star + 1
+                if next_star <= 6:
+                    # 还有星级要打
+                    # 判断当前重是否还需要锤炼
+                    end_star_this_chong = 6 if chong < target_chong else target_star
+                    for s in range(next_star, end_star_this_chong + 1):
+                        forge_key = (chong, s)
+                        if forge_key not in FORGE_DATA:
+                            break
+                        exp_mat = _get_forge_exp_mat(chong, s)
+                        exp_guard_val = _get_guard_exp(xinlu, chong, s)
+                        tier = _get_mat_tier(chong)
+                        used[tier] += exp_mat
+                        used["guard"] += exp_guard_val
+                    star = end_star_this_chong
+                    if chong == target_chong:
+                        break
+                    # 全6星，直接升重（不消耗升重石）
+                    if star == 6 and chong < target_chong:
+                        chong += 1
+                        star = 0
+                    else:
+                        break
+                elif star == 6:
+                    # 需要升重
+                    if chong < target_chong:
+                        chong += 1
+                        star = 0
+                    else:
+                        break
+                else:
+                    break
 
             # 输出
             lines = []
-            sr = STAR_RECORDS[rid]
-            lines.append(f"━━━ 所需材料 ━━━\n")
-            lines.append(f"星录：{sr['name']}星录")
-            lines.append(f"从 {start_w}重{start_s}星 → {target_w}重{target_s}星\n")
-            lines.append("┌──────────────────────────────┐")
-            lines.append(f"│ {'材料':<14} {'单星官':>10} {'×8星官':>10} │")
-            lines.append("├──────────────────────────────┤")
-            lines.append(f"│ 南明离火{'':<8}{self._fmt(tot_n):>10} {self._fmt(tot_n * 8):>10} │")
-            lines.append(f"│ 九幽玄火{'':<8}{self._fmt(tot_j):>10} {self._fmt(tot_j * 8):>10} │")
-            lines.append(f"│ 红莲业火{'':<8}{self._fmt(tot_h):>10} {self._fmt(tot_h * 8):>10} │")
-            lines.append(f"│ {sr['upgrade_stone']}{'':<8}{self._fmt(tot_u):>10} {self._fmt(tot_u * 8):>10} │")
-            lines.append("└──────────────────────────────┘")
-            lines.append("\n⚠ 灵运石为期望值，实际可能 ±20% 浮动")
+            lines.append(f"━━━ 星录材料需求汇总 ━━━\n")
+            lines.append(f"星录：{xinlu} | 最高{max_chong}重")
+            lines.append(f"范围：{start_chong}重{start_star}星 → {target_chong}重{target_star}星")
+            lines.append(f"计算方式：{'8个星官' if mult > 1 else '单个星官'}\n")
+
+            lines.append("━ 单官期望消耗 ━")
+            total_items = []
+            if used["low"] > 0:
+                total_items.append((cfg['low_mat'], "低阶", used["low"]))
+                lines.append(f"  {cfg['low_mat']}(低阶): {self._fmt(used['low'])}")
+            if used["mid"] > 0:
+                total_items.append((cfg['mid_mat'], "中阶", used["mid"]))
+                lines.append(f"  {cfg['mid_mat']}(中阶): {self._fmt(used['mid'])}")
+            if used["high"] > 0:
+                total_items.append((cfg['high_mat'], "高阶", used["high"]))
+                lines.append(f"  {cfg['high_mat']}(高阶): {self._fmt(used['high'])}")
+            if used["guard"] > 0:
+                total_items.append((cfg['guard'], "保级", used["guard"]))
+                lines.append(f"  {cfg['guard']}(保级): {self._fmt(used['guard'])}")
+
+            if mult > 1:
+                lines.append(f"\n━ 8官总消耗 ━")
+                for name, tier_name, amount in total_items:
+                    lines.append(f"  {name}({tier_name}): {self._fmt(amount * 8)}")
+
+            # 重段消耗明细
+            lines.append(f"\n━ 各重段消耗明细(单官) ━")
+            if used["low"] > 0:
+                lines.append(f"  1-10重 {cfg['low_mat']}: {self._fmt(used['low'])}")
+            if used["mid"] > 0:
+                lines.append(f"  11-15重 {cfg['mid_mat']}: {self._fmt(used['mid'])}")
+            if used["high"] > 0:
+                high_desc = "16-20重" if xinlu != "天市" else f"16-{max_chong}重"
+                lines.append(f"  {high_desc} {cfg['high_mat']}: {self._fmt(used['high'])}")
+
+            lines.append(f"\n💡 以上为期望值（锤炼为概率制），建议备20-30%冗余")
 
             self._show_result(self.t2_result, "\n".join(lines) + "\n")
 

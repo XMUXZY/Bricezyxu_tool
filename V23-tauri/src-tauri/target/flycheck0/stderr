@@ -1,0 +1,164 @@
+   2.709645000s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="game_ops_toolkit_lib"}: cargo::core::compiler::fingerprint: fingerprint error for game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri)/Check { test: false }/TargetInner { ..: lib_target("game_ops_toolkit_lib", ["lib", "cdylib", "staticlib"], "F:\\Bricezyxu_Tool\\Bricezyxu-Tool\\V23-tauri\\src-tauri\\src\\lib.rs", Edition2021) }
+   2.709706600s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="game_ops_toolkit_lib"}: cargo::core::compiler::fingerprint:     err: failed to read `F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\.fingerprint\game-ops-toolkit-1782c14ee505426e\lib-game_ops_toolkit_lib`
+
+Caused by:
+    系统找不到指定的文件。 (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   2.723133500s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri)/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "F:\\Bricezyxu_Tool\\Bricezyxu-Tool\\V23-tauri\\src-tauri\\build.rs", Edition2021) }
+   2.723156000s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\.fingerprint\game-ops-toolkit-b79f80770acf6168\run-build-script-build-script-build`
+
+Caused by:
+    系统找不到指定的文件。 (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_libgit2_prerelease
+  14: <unknown>
+  15: <unknown>
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   2.835667000s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="game_ops_toolkit_lib"}: cargo::core::compiler::fingerprint: fingerprint error for game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri)/Check { test: true }/TargetInner { ..: lib_target("game_ops_toolkit_lib", ["lib", "cdylib", "staticlib"], "F:\\Bricezyxu_Tool\\Bricezyxu-Tool\\V23-tauri\\src-tauri\\src\\lib.rs", Edition2021) }
+   2.835697200s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="game_ops_toolkit_lib"}: cargo::core::compiler::fingerprint:     err: failed to read `F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\.fingerprint\game-ops-toolkit-ce9de686a2e6abff\test-lib-game_ops_toolkit_lib`
+
+Caused by:
+    系统找不到指定的文件。 (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   2.836951100s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="game-ops-toolkit"}: cargo::core::compiler::fingerprint: fingerprint error for game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri)/Check { test: false }/TargetInner { name: "game-ops-toolkit", doc: true, ..: with_path("F:\\Bricezyxu_Tool\\Bricezyxu-Tool\\V23-tauri\\src-tauri\\src\\main.rs", Edition2021) }
+   2.836975200s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="game-ops-toolkit"}: cargo::core::compiler::fingerprint:     err: failed to read `F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\.fingerprint\game-ops-toolkit-dcd91fdca0dca810\bin-game-ops-toolkit`
+
+Caused by:
+    系统找不到指定的文件。 (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   2.838328200s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="game-ops-toolkit"}: cargo::core::compiler::fingerprint: fingerprint error for game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri)/Check { test: true }/TargetInner { name: "game-ops-toolkit", doc: true, ..: with_path("F:\\Bricezyxu_Tool\\Bricezyxu-Tool\\V23-tauri\\src-tauri\\src\\main.rs", Edition2021) }
+   2.838353000s  INFO prepare_target{force=false package_id=game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri) target="game-ops-toolkit"}: cargo::core::compiler::fingerprint:     err: failed to read `F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\.fingerprint\game-ops-toolkit-04ba706c2bb5c258\test-bin-game-ops-toolkit`
+
+Caused by:
+    系统找不到指定的文件。 (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   Compiling game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri)
+error: failed to run custom build command for `game-ops-toolkit v2.0.0 (F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri)`
+note: To improve backtraces for build dependencies, set the CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG=true environment variable to enable debug information generation.
+
+Caused by:
+  process didn't exit successfully: `F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\build\game-ops-toolkit-4b23d6f3f6e10660\build-script-build` (exit code: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=TAURI_CONFIG
+  cargo:rustc-check-cfg=cfg(desktop)
+  cargo:rustc-cfg=desktop
+  cargo:rustc-check-cfg=cfg(mobile)
+  cargo:rerun-if-changed=F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\tauri.conf.json
+  cargo:rustc-env=TAURI_ANDROID_PACKAGE_NAME_APP_NAME=toolkit
+  cargo:rustc-env=TAURI_ANDROID_PACKAGE_NAME_PREFIX=com_gameops
+  cargo:rustc-check-cfg=cfg(dev)
+  cargo:rustc-cfg=dev
+  cargo:PERMISSION_FILES_PATH=F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\debug\build\game-ops-toolkit-b79f80770acf6168\out\app-manifest\__app__-permission-files
+  cargo:rerun-if-changed=capabilities
+  cargo:rerun-if-env-changed=REMOVE_UNUSED_COMMANDS
+  cargo:rustc-env=TAURI_ENV_TARGET_TRIPLE=x86_64-pc-windows-msvc
+  package.metadata does not exist
+  `icons/icon.ico` not found; required for generating a Windows Resource file during tauri-build

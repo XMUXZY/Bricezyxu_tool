@@ -1,0 +1,82 @@
+{
+  "sixiang_cost": [
+    1,1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 4,4,4,4,4,
+    5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7, 8,8,8,8,8,
+    10,10,10,10,10, 12,12,12,12,12, 15,15,15,15,15, 18,18,18,18,18,
+    20,20,20,20,20, 22,22,22,22,22, 25,25,25,25,25, 30,30,30,30,30,
+    30,35,35,35,35, 40,40,40,40,40, 40,45,45,45,45, 50,50,50,50,50
+  ],
+  "sancai_chip_cost": [
+    1,1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 4,4,4,4,4,
+    4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7,
+    8,8,8,8,8, 10,10,10,10,10, 12,12,12,12,12, 15,15,15,15,15,
+    16,16,16,16,16, 18,18,18,18,18, 20,20,20,20,20, 24,24,24,24,24,
+    24,28,28,28,28, 32,32,32,32,32, 32,36,36,36,36, 36,40,40,40,40
+  ],
+  "sancai_mat2_cost": [
+    0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0,
+    1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1,
+    2,2,2,2,2, 2,2,2,2,2, 3,3,3,3,3, 3,3,3,3,3,
+    4,4,4,4,4, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6,
+    6,7,7,7,7, 8,8,8,8,8, 8,9,9,9,9, 9,10,10,10,10
+  ],
+  "fabao_list": [
+    {"name":"打神鞭","grade":"凡","formation":"四象阵","chip":"打神鞭碎片","mat2":null},
+    {"name":"斩仙刀","grade":"凡","formation":"四象阵","chip":"斩仙刀碎片","mat2":null},
+    {"name":"轩辕剑","grade":"凡","formation":"四象阵","chip":"轩辕剑碎片","mat2":null},
+    {"name":"伏羲琴","grade":"凡","formation":"四象阵","chip":"伏羲琴碎片","mat2":null},
+    {"name":"玄天伞","grade":"凡","formation":"四象阵","chip":"玄天伞碎片","mat2":null},
+    {"name":"遮天幡","grade":"凡","formation":"四象阵","chip":"遮天幡碎片","mat2":null},
+    {"name":"混沌钟","grade":"凡","formation":"四象阵","chip":"混沌钟碎片","mat2":null},
+    {"name":"玉清瓶","grade":"凡","formation":"四象阵","chip":"玉清瓶碎片","mat2":null},
+    {"name":"乾坤圈","grade":"凡","formation":"四象阵","chip":"乾坤圈碎片","mat2":null},
+    {"name":"翻天印","grade":"凡","formation":"四象阵","chip":"翻天印碎片","mat2":null},
+    {"name":"盘古斧","grade":"凡","formation":"四象阵","chip":"盘古斧碎片","mat2":null},
+    {"name":"昊天塔","grade":"凡","formation":"四象阵","chip":"昊天塔碎片","mat2":null},
+    {"name":"打神鞭","grade":"尊","formation":"四象阵","chip":"打神鞭碎片","mat2":null},
+    {"name":"斩仙刀","grade":"尊","formation":"四象阵","chip":"斩仙刀碎片","mat2":null},
+    {"name":"轩辕剑","grade":"尊","formation":"四象阵","chip":"轩辕剑碎片","mat2":null},
+    {"name":"伏羲琴","grade":"尊","formation":"四象阵","chip":"伏羲琴碎片","mat2":null},
+    {"name":"玄天伞","grade":"尊","formation":"四象阵","chip":"玄天伞碎片","mat2":null},
+    {"name":"遮天幡","grade":"尊","formation":"四象阵","chip":"遮天幡碎片","mat2":null},
+    {"name":"混沌钟","grade":"尊","formation":"四象阵","chip":"混沌钟碎片","mat2":null},
+    {"name":"玉清瓶","grade":"尊","formation":"四象阵","chip":"玉清瓶碎片","mat2":null},
+    {"name":"乾坤圈","grade":"尊","formation":"四象阵","chip":"乾坤圈碎片","mat2":null},
+    {"name":"翻天印","grade":"尊","formation":"四象阵","chip":"翻天印碎片","mat2":null},
+    {"name":"盘古斧","grade":"尊","formation":"四象阵","chip":"盘古斧碎片","mat2":null},
+    {"name":"昊天塔","grade":"尊","formation":"四象阵","chip":"昊天塔碎片","mat2":null},
+    {"name":"打神鞭","grade":"仙","formation":"四象阵","chip":"打神鞭碎片","mat2":null},
+    {"name":"斩仙刀","grade":"仙","formation":"四象阵","chip":"斩仙刀碎片","mat2":null},
+    {"name":"轩辕剑","grade":"仙","formation":"四象阵","chip":"轩辕剑碎片","mat2":null},
+    {"name":"伏羲琴","grade":"仙","formation":"四象阵","chip":"伏羲琴碎片","mat2":null},
+    {"name":"玄天伞","grade":"仙","formation":"四象阵","chip":"玄天伞碎片","mat2":null},
+    {"name":"遮天幡","grade":"仙","formation":"四象阵","chip":"遮天幡碎片","mat2":null},
+    {"name":"混沌钟","grade":"仙","formation":"四象阵","chip":"混沌钟碎片","mat2":null},
+    {"name":"玉清瓶","grade":"仙","formation":"四象阵","chip":"玉清瓶碎片","mat2":null},
+    {"name":"乾坤圈","grade":"仙","formation":"四象阵","chip":"乾坤圈碎片","mat2":null},
+    {"name":"翻天印","grade":"仙","formation":"四象阵","chip":"翻天印碎片","mat2":null},
+    {"name":"盘古斧","grade":"仙","formation":"四象阵","chip":"盘古斧碎片","mat2":null},
+    {"name":"昊天塔","grade":"仙","formation":"四象阵","chip":"昊天塔碎片","mat2":null},
+    {"name":"紫阳锤","grade":"凡","formation":"八卦两仪阵","chip":"紫阳锤碎片","mat2":null},
+    {"name":"玄阴索","grade":"凡","formation":"八卦两仪阵","chip":"玄阴索碎片","mat2":null},
+    {"name":"天禹剑","grade":"凡","formation":"三才阵","chip":"天禹剑碎片","mat2":"血叶金"},
+    {"name":"地脉罩","grade":"凡","formation":"三才阵","chip":"地脉罩碎片","mat2":"碧落断魂"},
+    {"name":"人皇山","grade":"凡","formation":"三才阵","chip":"人皇山碎片","mat2":"通天柏"},
+    {"name":"天衍卦","grade":"凡","formation":"归藏阵","chip":"天衍卦碎片","mat2":"灵羲石"},
+    {"name":"玄冥网","grade":"凡","formation":"归藏阵","chip":"玄冥网碎片","mat2":"玄冰丝"},
+    {"name":"五行石","grade":"凡","formation":"归藏阵","chip":"五行石碎片","mat2":"娲皇焱"},
+    {"name":"造化芦","grade":"凡","formation":"归藏阵","chip":"造化芦碎片","mat2":"青玉藤"}
+  ],
+  "formation_types": {
+    "四象阵": "SIXIANG",
+    "八卦两仪阵": "SIXIANG",
+    "三才阵": "SANCAI",
+    "归藏阵": "SANCAI"
+  },
+  "formation_colors": {
+    "四象阵": "#e94560",
+    "八卦两仪阵": "#ab47bc",
+    "三才阵": "#00bfa5",
+    "归藏阵": "#ffa000"
+  }
+}

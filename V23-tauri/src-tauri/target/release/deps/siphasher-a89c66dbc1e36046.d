@@ -1,0 +1,11 @@
+F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\release\deps\siphasher-a89c66dbc1e36046.d: C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\lib.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\common.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip128.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\../README.md
+
+F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\release\deps\libsiphasher-a89c66dbc1e36046.rlib: C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\lib.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\common.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip128.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\../README.md
+
+F:\Bricezyxu_Tool\Bricezyxu-Tool\V23-tauri\src-tauri\target\release\deps\libsiphasher-a89c66dbc1e36046.rmeta: C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\lib.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\common.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip128.rs C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\../README.md
+
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\lib.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\common.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip128.rs:
+C:\Users\bricezyxu\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\../README.md:

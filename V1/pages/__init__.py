@@ -15,6 +15,7 @@ from .tool_feng_shui import ToolFengShuiPage
 from .tool_gem_grind import ToolGemGrindPage
 from .tool_zhu_ling import ToolZhuLingPage
 from .tool_dunjia import ToolDunJia
+from .tool_fabao import ToolFaBao
 from .table_demo import TableDemoPage
 from .settings import SettingsPage
 
